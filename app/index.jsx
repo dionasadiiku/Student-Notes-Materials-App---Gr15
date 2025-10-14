@@ -19,9 +19,9 @@ export default function App() {
             resizeMode="contain"
           />
         </View>
-        <TouchableOpacity onPress={() => alert('Settings clicked!')}>
-          <Ionicons name="settings-outline" size={28} color="#000" />
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/settings")}>
+  <Ionicons name="settings-outline" size={28} color="#000" />
+</TouchableOpacity>
       </View>
 
       <View style={styles.content}>
