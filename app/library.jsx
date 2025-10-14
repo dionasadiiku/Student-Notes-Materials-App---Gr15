@@ -22,14 +22,14 @@ const [task, setTask] = useState("");
     
   );
   const renderHeader = () => (
-    <Text style={styles.listHeader}>Your Tasks</Text>
+    <Text style={styles.listHeader}>Your Notes</Text>
   )
   const renderFooter = () => (
-<Text style={styles.listFooter}>End of the list</Text>
+<Text style={styles.listFooter}>End of the library</Text>
   )
 
   const renderEmptyList = () => (
-    <Text style={styles.emptyText}>No tasks yet.Please add one!</Text>
+    <Text style={styles.emptyText}>No books yet.</Text>
   )
   const deleteTask =(id) => {
     setTasks(tasks.filter((item) => item.id !== id))
@@ -37,12 +37,12 @@ const [task, setTask] = useState("");
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle = "white-content" />
-      <Text style={styles.title}>Task Manager</Text>
+      <Text style={styles.title}>Library</Text>
       <View style={styles.row}>
       <TextInput style={styles.input} value={task} onChangeText={setTask} placeholder='Add a new task...'/>
       <TouchableOpacity onPress={addTask}>
         <View style={styles.addBtn}>
-        <Text style={{ color: 'white'}}>Add Task</Text>
+        <Text style={{ color: 'white'}}>Add Books</Text>
         </View>
       </TouchableOpacity>
       </View>
@@ -71,7 +71,7 @@ export default index
 const styles =StyleSheet.create({
   container: {
     flex:1,
-    backgroundColor: "lightblue"
+    backgroundColor: "#fdfcff"
   },
   title: {
     fontSize: 32,
@@ -87,12 +87,13 @@ const styles =StyleSheet.create({
     flex: 1,
     borderWidth:1,
     borderRadius:8,
-    backgroundColor: "white",
+    height:50,
+    backgroundColor: "#fde4cf",
     borderColor: "white"
 
   },
   addBtn: {
-    backgroundColor: "darkblue",
+    backgroundColor: "#ff8fab",
     paddingHorizontal:16,
     marginLeft: 8,
     color: "white",
@@ -122,7 +123,7 @@ const styles =StyleSheet.create({
   },
   listFooter: {
     marginTop:10,
-    color: "red",
+    color: "black",
     fontSize: 20,
     textAlign: "center"
   },
