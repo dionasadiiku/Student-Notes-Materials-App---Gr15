@@ -44,7 +44,7 @@ export default function App() {
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity onPress={() => alert('Home clicked!')}>
+        <TouchableOpacity >
           <Ionicons name="home-outline" size={28} color="#000" />
         </TouchableOpacity>
 
