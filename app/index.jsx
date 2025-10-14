@@ -25,8 +25,8 @@ export default function App() {
       </View>
 
       <View style={styles.content}>
-        {/* <Text style={styles.sectionTitle}>My Studylist</Text>
-        <Text style={styles.subtitle}>Tap to learn more</Text> */}
+        <Text style={styles.sectionTitle}>My Studylist</Text>
+        <Text style={styles.subtitle}>Tap to learn more</Text>
 
         <TouchableOpacity 
           style={styles.favoriteCard}
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   },
   header: {
     height: 60,
-    backgroundColor: '#e5d0dfff',
+    backgroundColor: '#eab8dcff',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     height: 60,
-    backgroundColor: '#e5d0dfff',
+    backgroundColor: '#eab8dcff',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   favoriteCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fde4cf',
+    backgroundColor: '#f4f4f4ff',
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#ff8fab',
+    backgroundColor: '#eab8dcff',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
