@@ -39,10 +39,10 @@ const [task, setTask] = useState("");
       <StatusBar barStyle = "white-content" />
       <Text style={styles.title}>Library</Text>
       <View style={styles.row}>
-      <TextInput style={styles.input} value={task} onChangeText={setTask} placeholder='Add a new task...'/>
+      <TextInput style={styles.input} value={task} onChangeText={setTask} placeholder='Add a new book...' placeholderTextColor="black"/>
       <TouchableOpacity onPress={addTask}>
         <View style={styles.addBtn}>
-        <Text style={{ color: 'white'}}>Add Books</Text>
+        <Text style={{ color: 'black'}}>Add Books</Text>
         </View>
       </TouchableOpacity>
       </View>
@@ -71,7 +71,7 @@ export default index
 const styles =StyleSheet.create({
   container: {
     flex:1,
-    backgroundColor: "#fdfcff"
+    backgroundColor: "#eab8dcff"
   },
   title: {
     fontSize: 32,
@@ -88,25 +88,29 @@ const styles =StyleSheet.create({
     borderWidth:1,
     borderRadius:8,
     height:50,
-    backgroundColor: "#fde4cf",
-    borderColor: "white"
-
+    backgroundColor: "white",
+    borderColor: "black",
+   
   },
   addBtn: {
-    backgroundColor: "#ff8fab",
+    borderWidth:1,
+    backgroundColor: "white",
     paddingHorizontal:16,
     marginLeft: 8,
     color: "white",
     height:40,
     flex: 1,
     justifyContent: "center",
-    borderRadius:8
+    borderRadius:8,
+    borderColor: "black",
   },
   taskItem: {
+    borderWidth:1,
     flex: 1,
     backgroundColor: "white",
     borderRadius: 8,
     padding: 15,
+    borderColor: "black",
     
   
   },

@@ -30,7 +30,7 @@ export default function App() {
 
         <TouchableOpacity 
           style={styles.favoriteCard}
-          onPress={() => alert('My Favorites clicked!')}
+          onPress={() => router.push("/favorites")}
           activeOpacity={0.8}
         >
           <View style={styles.iconContainer}>
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   footer: {
-    height: 60,
+    height: 80,
     backgroundColor: '#eab8dcff',
     flexDirection: 'row',
     alignItems: 'center',
