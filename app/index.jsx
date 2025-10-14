@@ -1,7 +1,14 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+
 export default function App() {
+
+   const router = useRouter();
+
+
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -29,7 +36,7 @@ export default function App() {
           <Ionicons name="home-outline" size={28} color="#000" />
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => alert('Library clicked!')}>
+        <TouchableOpacity onPress={() => router.push("/library")}>
           <MaterialCommunityIcons name="book-open-outline" size={28} color="#000" />
         </TouchableOpacity>
 
