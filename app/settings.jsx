@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 const settingsItems = [
-  { id: '1', title: 'See content for', value: 'University' },
+   { id: '1', title: 'See content for', value: 'University', screen: '/seecontentfor' },
   { id: '2', title: 'Terms of use' },
   { id: '3', title: 'Privacy policy' },
   { id: '4', title: 'Contact us' },
@@ -11,8 +12,12 @@ const settingsItems = [
 ];
 
 export default function SettingsScreen() {
+      const router = useRouter();
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.item}>
+       <TouchableOpacity
+      style={styles.item}
+      onPress={() => item.screen && router.push(item.screen)}
+    >
       <Text style={styles.itemText}>{item.title}</Text>
       <View style={styles.rightContainer}>
         {item.value && <Text style={styles.valueText}>{item.value}</Text>}
