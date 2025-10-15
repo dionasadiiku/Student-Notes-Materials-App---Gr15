@@ -71,8 +71,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#eab8dcff',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 15,
+    justifyContent: 'space-between',
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -96,8 +96,8 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 5,
   },
-  logoContainer: { flexDirection: 'row', alignItems: 'center' },
-  logoImage: { width: 150, height: 100, borderRadius: 15, marginRight: 8 },
+  logoContainer: { flexDirection: 'row', alignItems: 'center',},
+  logoImage: { width: 150, height: 100, borderRadius: 15, marginLeft:2 , },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#eab8dcff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    
   },
   favoriteTitle: {
     fontSize: 16,
