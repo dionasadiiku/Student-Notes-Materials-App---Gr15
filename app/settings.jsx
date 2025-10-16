@@ -1,11 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const settingsItems = [
    { id: '1', title: 'See content for', value: 'University', screen: '/seecontentfor' },
- { id: '2', title: 'Terms of use', screen: '/termsofuse' },
+ { id: '2', title: 'Terms of use', screen: '/termsOfUse' },
   { id: '3', title: 'Privacy policy' },
   { id: '4', title: 'Contact us' },
   { id: '5', title: 'Give feedback' },
