@@ -1,21 +1,70 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Modal, Linking } from 'react-native';
+import React, { useState } from 'react';
 
 const settingsItems = [
-   { id: '1', title: 'See content for', value: 'University', screen: '/seecontentfor' },
- { id: '2', title: 'Terms of use', screen: '/termsOfUse' },
-  { id: '3', title: 'Privacy policy' },
+  { id: '1', title: 'See content for', value: 'University', screen: '/seecontentfor' },
+  { id: '2', title: 'Terms of use', screen: '/termsofuse' },
+  { id: '3', title: 'Privacy policy', screen: '/privacyPolicy' },
   { id: '4', title: 'Contact us' },
-  { id: '5', title: 'Give feedback' },
+  { id: '5', title: 'Give feedback' }, // nuk ka screen, do hap modal
 ];
 
 export default function SettingsScreen() {
-      const router = useRouter();
+  const router = useRouter();
+
+  // State për popup-in e feedback
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [selectedFeedback, setSelectedFeedback] = useState('like');
+
+  // Funksioni për të hapur email-in për "Contact us"
+  const handleContactUs = () => {
+    const email = 'notesApp@gmail.com';
+    const subject = 'Contact NotesApp';
+    const body = 'Hi NotesApp team,';
+
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    Linking.openURL(mailtoUrl).catch(err => console.error('Error opening email app:', err));
+  };
+
+  // Funksioni për të zgjedhur feedback
+  const handleFeedback = (option) => {
+    console.log('User selected:', option);
+    setSelectedFeedback(option);
+    if (option === 'later') {
+      setShowFeedbackModal(false); // mbyll modal kur përdoruesi zgjedh "Not now"
+    }
+  };
+
+  // Funksioni për krijimin e butonave
+  const renderFeedbackButton = (option, label) => (
+    <TouchableOpacity
+      style={[
+        styles.button,
+        selectedFeedback === option && option !== 'later' && { backgroundColor: '#007AFF', borderColor: '#007AFF' },
+      ]}
+      onPress={() => handleFeedback(option)}
+    >
+      <Text style={selectedFeedback === option ? styles.primaryButtonText : styles.secondaryButtonText}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  // Funksioni për renderimin e elementeve të listës
   const renderItem = ({ item }) => (
-       <TouchableOpacity
+    <TouchableOpacity
       style={styles.item}
-      onPress={() => item.screen && router.push(item.screen)}
+      onPress={() => {
+        if (item.id === '5') {
+          setShowFeedbackModal(true); // hap modalin për Give feedback
+        } else if (item.id === '4') {
+          handleContactUs(); // hap email app për Contact us
+        } else if (item.screen) {
+          router.push(item.screen);
+        }
+      }}
     >
       <Text style={styles.itemText}>{item.title}</Text>
       <View style={styles.rightContainer}>
@@ -27,9 +76,9 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-    <View style={styles.header}>
-  <Text style={styles.headerTitle}>Settings</Text>
-</View>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Settings</Text>
+      </View>
 
       <FlatList
         data={settingsItems}
@@ -37,31 +86,58 @@ export default function SettingsScreen() {
         keyExtractor={item => item.id}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
+
       <Text style={styles.version}>Version: 7.9.3.5583</Text>
+
+      {/* Modal i feedback brenda SettingsScreen */}
+      <Modal
+        visible={showFeedbackModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFeedbackModal(false)}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.modal}>
+            <Text style={styles.star}>⭐</Text>
+            <Text style={styles.title}>Enjoying the app?</Text>
+            <Text style={styles.subtitle}>
+              Please rate us on the app store{'\n'}
+              Help other students find out about us with a positive rating!
+            </Text>
+
+            {renderFeedbackButton('like', "Yes, I like it!")}
+            {renderFeedbackButton('not_happy', "No, I'm not happy")}
+            {renderFeedbackButton('later', "Not now")}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 20 },
- header: {
-  height: 60,
-  backgroundColor: '#eab8dcff', // pink ngjyra e njejtë si te SeeContentFor
-  justifyContent: 'center',
-  alignItems: 'center',
-  paddingHorizontal: 20,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.2,
-  shadowRadius: 2,
-  elevation: 5,
-},
-headerTitle: {
-  fontSize: 22,
-  fontWeight: '600',
-  color: '#000',
-},
-
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+  },
+  header: {
+    height: 60,
+    backgroundColor: '#eab8dcff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 5,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#000',
+  },
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -91,4 +167,61 @@ headerTitle: {
     fontSize: 14,
     marginTop: 40,
   },
+
+  // Stilet e modalit të feedback
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modal: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 25,
+    width: '85%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  star: {
+    fontSize: 30,
+    marginBottom: 10,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 15,
+    textAlign: 'center',
+    color: '#555',
+    marginBottom: 25,
+    lineHeight: 20,
+  },
+  button: {
+    width: '100%',
+    borderRadius: 25,
+    paddingVertical: 12,
+    marginVertical: 6,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  secondaryButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
 });
+
