@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 
 const settingsItems = [
    { id: '1', title: 'See content for', value: 'University', screen: '/seecontentfor' },
-  { id: '2', title: 'Terms of use' },
+ { id: '2', title: 'Terms of use', screen: '/termsofuse' },
   { id: '3', title: 'Privacy policy' },
   { id: '4', title: 'Contact us' },
   { id: '5', title: 'Give feedback' },
@@ -28,7 +28,10 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Settings</Text>
+    <View style={styles.header}>
+  <Text style={styles.headerTitle}>Settings</Text>
+</View>
+
       <FlatList
         data={settingsItems}
         renderItem={renderItem}
@@ -42,12 +45,24 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 20 },
-  header: {
-    fontSize: 22,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginVertical: 20,
-  },
+ header: {
+  height: 60,
+  backgroundColor: '#eab8dcff', // pink ngjyra e njejtë si te SeeContentFor
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.2,
+  shadowRadius: 2,
+  elevation: 5,
+},
+headerTitle: {
+  fontSize: 22,
+  fontWeight: '600',
+  color: '#000',
+},
+
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
