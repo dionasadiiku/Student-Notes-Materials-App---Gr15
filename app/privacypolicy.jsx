@@ -25,7 +25,7 @@ export default function PrivacyPolicyScreen() {
           You can contact us via email at <Text style={{fontWeight: 'bold'}}>support@notesapp.com</Text>.
         </Text>
 
-        {/* Add more paragraphs if needed */}
+        
       </ScrollView>
     </SafeAreaView>
   );
