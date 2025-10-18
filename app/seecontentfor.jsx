@@ -12,7 +12,7 @@ export default function SeeContentForScreen() {
         <Text style={styles.headerTitle}>See Content For</Text>
       </View>
       <View style={styles.content}>
-        {/* University option */}
+       
         <TouchableOpacity
           style={styles.option}
           onPress={() => setSelected('University')}
@@ -25,7 +25,7 @@ export default function SeeContentForScreen() {
           )}
         </TouchableOpacity>
 
-        {/* High School option */}
+      
         <TouchableOpacity
           style={styles.option}
           onPress={() => setSelected('High School')}

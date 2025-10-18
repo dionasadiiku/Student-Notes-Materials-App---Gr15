@@ -8,17 +8,17 @@ const settingsItems = [
   { id: '2', title: 'Terms of use', screen: '/termsofuse' },
   { id: '3', title: 'Privacy policy', screen: '/privacyPolicy' },
   { id: '4', title: 'Contact us' },
-  { id: '5', title: 'Give feedback' }, // nuk ka screen, do hap modal
+  { id: '5', title: 'Give feedback' }, 
 ];
 
 export default function SettingsScreen() {
   const router = useRouter();
 
-  // State për popup-in e feedback
+  
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState('like');
 
-  // Funksioni për të hapur email-in për "Contact us"
+  
   const handleContactUs = () => {
     const email = 'notesApp@gmail.com';
     const subject = 'Contact NotesApp';
@@ -28,16 +28,15 @@ export default function SettingsScreen() {
     Linking.openURL(mailtoUrl).catch(err => console.error('Error opening email app:', err));
   };
 
-  // Funksioni për të zgjedhur feedback
+  
   const handleFeedback = (option) => {
     console.log('User selected:', option);
     setSelectedFeedback(option);
     if (option === 'later') {
-      setShowFeedbackModal(false); // mbyll modal kur përdoruesi zgjedh "Not now"
+      setShowFeedbackModal(false); 
     }
   };
 
-  // Funksioni për krijimin e butonave
   const renderFeedbackButton = (option, label) => (
     <TouchableOpacity
       style={[
@@ -52,15 +51,15 @@ export default function SettingsScreen() {
     </TouchableOpacity>
   );
 
-  // Funksioni për renderimin e elementeve të listës
+  
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.item}
       onPress={() => {
         if (item.id === '5') {
-          setShowFeedbackModal(true); // hap modalin për Give feedback
+          setShowFeedbackModal(true); 
         } else if (item.id === '4') {
-          handleContactUs(); // hap email app për Contact us
+          handleContactUs(); 
         } else if (item.screen) {
           router.push(item.screen);
         }
@@ -89,7 +88,6 @@ export default function SettingsScreen() {
 
       <Text style={styles.version}>Version: 7.9.3.5583</Text>
 
-      {/* Modal i feedback brenda SettingsScreen */}
       <Modal
         visible={showFeedbackModal}
         transparent
@@ -168,7 +166,7 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
 
-  // Stilet e modalit të feedback
+
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
