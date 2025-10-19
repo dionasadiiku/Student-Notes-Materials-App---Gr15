@@ -1,12 +1,12 @@
 # Student-Notes-Materials-App---Gr15
 
 # Anetaret e grupit:
-Arijana Braha
-Diona Sadiku
-Albin Maqastena
-Diell Fazliu
-Erjon Mustafa
-Jon Llabjani
+Arijana Braha,
+Diona Sadiku,
+Albin Maqastena,
+Diell Fazliu,
+Erjon Mustafa,
+Jon Llabjani.
 
 # Pershkrimi i Projektit:
 
