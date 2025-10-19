@@ -9,6 +9,12 @@ const Index = () => {
   const [tasks, setTasks] = useState([]);
   const [task, setTask] = useState("");
 
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refreshBook = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   const addTask = () => {
     if (!task.trim()) return;
     setTasks([...tasks, { id: Date.now().toString(), title: task }]);
@@ -72,7 +78,7 @@ const Index = () => {
         />
       </View>
 
-      <Footer />
+      <Footer onBookPress={refreshBook}/>
     </View>
   );
 };

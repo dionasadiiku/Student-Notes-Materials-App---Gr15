@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Footer from "./components/footer";
 import Header from "./components/header";
 
 export default function Reminder() {
   const [reminders, setReminders] = useState([]);
   const [newReminder, setNewReminder] = useState("");
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refreshReminder = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const addReminder = () => {
     if (!newReminder.trim()) return;
@@ -15,7 +20,7 @@ export default function Reminder() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.container}>
       <Header />
 
       <KeyboardAvoidingView
@@ -30,6 +35,7 @@ export default function Reminder() {
             style={styles.input}
             value={newReminder}
             onChangeText={setNewReminder}
+            placeholderTextColor={'#000'}
           />
           <TouchableOpacity style={styles.button} onPress={addReminder}>
             <Text style={styles.buttonText}>Add</Text>
@@ -39,20 +45,27 @@ export default function Reminder() {
         <FlatList
           data={reminders}
           keyExtractor={(item, i) => i.toString()}
-          renderItem={({ item }) => <Text style={styles.reminder}>{item}</Text>}
+          renderItem={({ item }) => (
+            <View style={styles.reminderRow}>
+              <Text style={styles.reminderText}>{item}</Text>
+              <TouchableOpacity onPress={() => deleteReminder(item)}>
+                <Text style={styles.deleteText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
           contentContainerStyle={{ paddingBottom: 20 }}
         />
       </KeyboardAvoidingView>
 
-      <Footer />
-    </SafeAreaView>
+      <Footer onReminderPress={refreshReminder}/>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" },
-  content: { flex: 1, paddingHorizontal: 20, paddingTop: 10 },
-  title: { fontSize: 28, fontWeight: "bold", marginBottom: 15, textAlign: "center" },
+  container: {flex: 1, backgroundColor: '#fff'},
+  content: { flex: 1, paddingHorizontal: 20 },
+  title: { fontSize: 28, fontWeight: "bold", marginVertical: 20, textAlign: "center" },
   inputRow: { flexDirection: "row", marginBottom: 15 },
   input: {
     flex: 1,

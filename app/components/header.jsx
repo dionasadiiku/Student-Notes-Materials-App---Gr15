@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Asset } from "expo-asset";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 
-export default function Header() {
+export default function Header({onSettingsPress}) {
   const router = useRouter();
+  const pathname = usePathname();
   const [logoReady, setLogoReady] = useState(false);
 
   useEffect(() => {
@@ -16,6 +17,16 @@ export default function Header() {
     loadLogo();
   }, []);
 
+  const handleSettingsPress = () => {
+    if(onSettingsPress) {
+        onSettingsPress();
+    } else if (pathname === '/settings') {
+        router.replace('/settings');
+    } else {
+        router.push('/settings');
+    }
+  };
+
   return (
     <View style={styles.header}>
       {logoReady && (
@@ -25,7 +36,7 @@ export default function Header() {
           resizeMode="contain"
         />
       )}
-      <TouchableOpacity onPress={() => router.push("/settings")}>
+      <TouchableOpacity onPress={handleSettingsPress}>
         <Ionicons name="settings-outline" size={26} color="#000" />
       </TouchableOpacity>
     </View>
