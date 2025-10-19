@@ -1,153 +1,143 @@
-import { Link } from 'expo-router';
-import { useState } from 'react';
-import { FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import { Link } from "expo-router";
+import { useState } from "react";
+import { FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Footer from "./components/footer";
+import Header from "./components/header";
 
+const Index = () => {
+  const [tasks, setTasks] = useState([]);
+  const [task, setTask] = useState("");
 
-const index = () => {
-const [tasks, setTasks] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-const [task, setTask] = useState("");
-
+  const refreshBook = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const addTask = () => {
-   if (task.trim() === "") return;
-    const newTask = {id: Date.now().toString(), title: task}
-    setTasks([...tasks,newTask])
-    setTask("")
-  }
+    if (!task.trim()) return;
+    setTasks([...tasks, { id: Date.now().toString(), title: task }]);
+    setTask("");
+  };
 
-  const renderSeparator = () => (
-    <View style={styles.separator}/>
-    
-  );
-  const renderHeader = () => (
-    <Text style={styles.listHeader}>Your Notes</Text>
-  )
-  const renderFooter = () => (
-<Text style={styles.listFooter}>End of the library</Text>
-  )
+  const deleteTask = (id) => setTasks(tasks.filter((item) => item.id !== id));
 
-  const renderEmptyList = () => (
-    <Text style={styles.emptyText}>No books yet.</Text>
-  )
-  const deleteTask =(id) => {
-    setTasks(tasks.filter((item) => item.id !== id))
-  }
+  const renderSeparator = () => <View style={styles.separator} />;
+  const renderHeader = () => <Text style={styles.listHeader}>Your Notes</Text>;
+  const renderFooter = () => <Text style={styles.listFooter}>End of the library</Text>;
+  const renderEmptyList = () => <Text style={styles.emptyText}>No books yet.</Text>;
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle = "white-content" />
-      <Text style={styles.title}>Library</Text>
-      <View style={styles.row}>
-      <TextInput style={styles.input} value={task} onChangeText={setTask} placeholder='Add a new book...' placeholderTextColor="black"/>
-      <TouchableOpacity onPress={addTask}>
-        <View style={styles.addBtn}>
-        <Text style={{ color: 'black'}}>Add Books</Text>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+
+      <Header />
+
+      <View style={styles.content}>
+        <Text style={styles.title}>Library</Text>
+
+        <View style={styles.row}>
+          <TextInput
+            style={styles.input}
+            value={task}
+            onChangeText={setTask}
+            placeholder="Add a new book..."
+            placeholderTextColor="black"
+          />
+          <TouchableOpacity onPress={addTask}>
+            <View style={styles.addBtn}>
+              <Text style={{ color: "black" }}>Add Books</Text>
+            </View>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+
+        <FlatList
+          data={tasks}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.taskItem}>
+              <Link href="/tasks/23">
+                <Text>{item.title}</Text>
+              </Link>
+              <View style={styles.actions}>
+                <TouchableOpacity onPress={() => console.log("Saved:", item.title)}>
+                  <Ionicons name="bookmark-outline" size={22} color="black" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => deleteTask(item.id)}>
+                  <Ionicons name="trash-outline" size={22} color="red" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+          ItemSeparatorComponent={renderSeparator}
+          ListHeaderComponent={renderHeader}
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={renderEmptyList}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+        />
       </View>
 
-      <FlatList  style={styles.list} data={tasks} keyExtractor={(item) => item.id} renderItem={({item}) => (
-        <View style={styles.taskItem}>
-          <Link href='/tasks/23'>
-          <Text>{item.title}</Text>
-          </Link>
-        
-       <View style={styles.actions}>
-             <TouchableOpacity onPress={() => console.log("Saved:", item.title)}>
-               <Ionicons name="bookmark-outline" size={22} color="black" />
-             </TouchableOpacity>
+      <Footer onBookPress={refreshBook}/>
+    </View>
+  );
+};
 
-             <TouchableOpacity onPress={() => deleteTask(item.id)}>
-               <Ionicons name="trash-outline" size={22} color="red" />
-             </TouchableOpacity>
-          </View>
-        </View>
-      )}
-      ItemSeparatorComponent={renderSeparator}
-      ListHeaderComponent={renderHeader}
-      ListFooterComponent={renderFooter}
-      ListEmptyComponent={renderEmptyList}
-      />
-    </SafeAreaView>
-  )
-}
-export default index
+export default Index;
 
-const styles =StyleSheet.create({
-  container: {
-    flex:1,
-    backgroundColor: "#eab8dcff"
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 20
-  },
-  row: {
-    flexDirection: "row",
-    marginBottom: 12
-  },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#fff" },
+  content: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
+  title: { fontSize: 28, fontWeight: "700", marginBottom: 20, textAlign: "center" },
+
+  row: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
   input: {
     flex: 1,
-    borderWidth:1,
-    borderRadius:8,
-    height:50,
-    backgroundColor: "white",
-    borderColor: "black",
-   
+    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: "#f3e6f9",
+    color: "#000",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
   },
   addBtn: {
-    borderWidth:1,
-    backgroundColor: "white",
-    paddingHorizontal:16,
-    marginLeft: 8,
-    color: "white",
-    height:40,
-    flex: 1,
+    marginLeft: 10,
+    backgroundColor: "#eab8dcff",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 16,
     justifyContent: "center",
-    borderRadius:8,
-    borderColor: "black",
-  },
-  taskItem: {
-    borderWidth: 1,
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 15,
-    borderColor: "black",
-    flexDirection: "row",           
-    justifyContent: "space-between", 
-    alignItems: "center",            
-    marginVertical: 5,    
-  },
-  list:{
-  paddingHorizontal: 20,
-  },
-  separator: {
-   height: 8,
-  },
-  listHeader: {
-    fontSize: 24,
-    fontWeight: "400",
-    marginBottom:10
-  },
-  listFooter: {
-    marginTop:10,
-    color: "black",
-    fontSize: 20,
-    textAlign: "center"
-  },
-  emptyText: {
-    fontSize: 16,
-    color: "gray",
-    marginTop: 10,
-    textAlign: "center"
-  },
-    actions: {
-    flexDirection: "row",      
     alignItems: "center",
-    gap: 10,                   
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
   },
-})
+
+  taskItem: {
+    backgroundColor: "#eab8dcff",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actions: { flexDirection: "row", alignItems: "center", gap: 10 },
+
+  separator: { height: 8 },
+  listHeader: { fontSize: 20, fontWeight: "600", marginBottom: 10 },
+  listFooter: { fontSize: 16, color: "#000", textAlign: "center", marginTop: 10 },
+  emptyText: { fontSize: 16, color: "#999", textAlign: "center", marginTop: 30 },
+});

@@ -1,9 +1,18 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Footer from './components/footer';
+import Header from './components/header';
 
 export default function App() {
   const router = useRouter();
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refreshHome = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const books = [
     { id: '1', title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', cover: 'https://covers.openlibrary.org/b/id/7222246-L.jpg' },
@@ -13,16 +22,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Image 
-          source={require('../assets/images/logotransparente.png')} 
-          style={styles.logoImage} 
-          resizeMode="contain"
-        />
-        <TouchableOpacity onPress={() => router.push("/settings")}>
-          <Ionicons name="settings-outline" size={26} color="#000" />
-        </TouchableOpacity>
-      </View>
+      <Header />
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.topCards}>
@@ -72,37 +72,13 @@ export default function App() {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity >
-          <Ionicons name="home-outline" size={28} color="#000" />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.push("/library")}>
-          <MaterialCommunityIcons name="book-open-outline" size={28} color="#000"/>
-        </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push("/reminder")}>
-    <Ionicons name="notifications-outline" size={28} color="#000" />
-  </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.push("/search")}>
-          <Ionicons name="search-outline" size={28} color="#000" />
-        </TouchableOpacity>
-      </View>
+      <Footer onHomePress={refreshHome} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fdfcff' },
-  header: {
-    height: 60,
-    backgroundColor: '#eab8dcff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-  },
   logoImage: { width: 140, height: 80 , marginLeft:-25},
   scrollContainer: { padding: 20 },
   topCards: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
@@ -162,14 +138,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#555',
     textAlign: 'center',
-  },
-  footer: {
-    height: 70,
-    backgroundColor: '#eab8dcff',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-  },
+  }
 });
