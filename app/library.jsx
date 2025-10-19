@@ -6,8 +6,8 @@ import Footer from "./components/footer";
 import Header from "./components/header";
 
 const Index = () => {
-  const [tasks, setTasks] = useState([]);
-  const [task, setTask] = useState("");
+  const [books, setBooks] = useState([]);
+  const [book, setBook] = useState("");
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -15,13 +15,13 @@ const Index = () => {
     setRefreshKey(prev => prev + 1);
   };
 
-  const addTask = () => {
-    if (!task.trim()) return;
-    setTasks([...tasks, { id: Date.now().toString(), title: task }]);
-    setTask("");
+  const addBook = () => {
+    if (!book.trim()) return;
+    setBooks([...books, { id: Date.now().toString(), title: book }]);
+    setBook("");
   };
 
-  const deleteTask = (id) => setTasks(tasks.filter((item) => item.id !== id));
+  const deleteBook = (id) => setBooks(books.filter((item) => item.id !== id));
 
   const renderSeparator = () => <View style={styles.separator} />;
   const renderHeader = () => <Text style={styles.listHeader}>Your Notes</Text>;
@@ -40,12 +40,12 @@ const Index = () => {
         <View style={styles.row}>
           <TextInput
             style={styles.input}
-            value={task}
-            onChangeText={setTask}
+            value={book}
+            onChangeText={setBook}
             placeholder="Add a new book..."
             placeholderTextColor="black"
           />
-          <TouchableOpacity onPress={addTask}>
+          <TouchableOpacity onPress={addBook}>
             <View style={styles.addBtn}>
               <Text style={{ color: "black" }}>Add Books</Text>
             </View>
@@ -53,10 +53,10 @@ const Index = () => {
         </View>
 
         <FlatList
-          data={tasks}
+          data={books}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.taskItem}>
+            <View style={styles.bookItem}>
               <Link href="/tasks/23">
                 <Text>{item.title}</Text>
               </Link>
@@ -64,7 +64,7 @@ const Index = () => {
                 <TouchableOpacity onPress={() => console.log("Saved:", item.title)}>
                   <Ionicons name="bookmark-outline" size={22} color="black" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteTask(item.id)}>
+                <TouchableOpacity onPress={() => deleteBook(item.id)}>
                   <Ionicons name="trash-outline" size={22} color="red" />
                 </TouchableOpacity>
               </View>
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  taskItem: {
+  bookItem: {
     backgroundColor: "#eab8dcff",
     padding: 16,
     borderRadius: 12,
