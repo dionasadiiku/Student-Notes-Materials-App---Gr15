@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fdfcff' },
   header: {
     height: 60,
-    backgroundColor: '#fff',
+    backgroundColor: '#eab8dcff',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     height: 70,
-    backgroundColor: '#fff',
+    backgroundColor: '#eab8dcff',
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
