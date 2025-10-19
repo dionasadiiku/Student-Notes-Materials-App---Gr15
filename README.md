@@ -74,6 +74,28 @@ Projekti ndahet në disa skedarë për funksionalitete specifike:
 
   <img src="assets/images/LibraryScreen.png" alt="File Editor" width="200"/>
 ---
+⏰ Reminder
+
+- Përdoruesi mund të shtojë kujtime të shpejta.
+
+- Lista e kujtimeve shfaqet gjithashtu si kartela me shadow, me mundësi për fshirje.
+
+- Footer mund të rifreskojë ekranin nëse shtypet ikona e Reminder.
+
+  <img src="assets/images/ReminderScreen.png" alt="Reminder Screen" width="200"/>
+---
+🔍 Search
+
+- Mund të kërkoni libra ose shënime sipas titullit.
+
+- Rezultatet shfaqen si kartela me shadow dhe padding, e ngjashme me Library dhe Reminder.
+
+- Tregon mesazh “No results found” kur nuk ka rezultate.
+
+- Footer mund të rifreskojë ekranin nëse shtypet ikona e Search.
+
+  <img src="assets/images/SearchScreen.png" alt="Search Screen" width="200"/>
+---
 ⚙️ Settings
 
 Përmban lidhje për:
@@ -83,6 +105,16 @@ Përmban lidhje për:
 - Give Feedback
 
    <img src="assets/images/SettingsScreen.png" alt="File Editor" width="200"/>
+---
+🖌 Stili dhe UI
+
+- Kartelat (cards) përdorin borderRadius: 12–16, shadowColor, shadowOpacity, shadowOffset, shadowRadius, dhe elevation për një efekt modern.
+
+- Input-et dhe butonat gjithashtu kanë rounded corners dhe shadow.
+
+- Të gjitha ekranet kanë Header me logo dhe settings dhe Footer me navigim.
+
+- Dizajni është konzistent në të gjitha ekranet, për eksperiencë uniforme.
 ---
 ## 💻  Si ta ekzekutoni projektin
 ...
