@@ -1,50 +1,102 @@
-# Welcome to your Expo app 👋
+# 📚 Student Notes & Materials App
+> Një **prototip fillestar** i ndërtuar me **React Native (Expo)** që demonstron strukturën, navigimin dhe ndërfaqen bazike të një aplikacioni për menaxhimin e librave dhe shënimeve të studimit.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+---
 
-## Get started
+##  Çfarë bën ky projekt?
 
-1. Install dependencies
+- Mundëson **navigimin midis ekraneve** përmes **Expo Router**.
 
-   ```bash
-   npm install
-   ```
+- Ka **UI funksionale** me përdorimin e komponenteve bazike të React Native.
 
-2. Start the app
+- Përdor **useState për** ruajtjen lokale të të dhënave (p.sh. lista e librave).
 
-   ```bash
-   npx expo start
-   ```
+- Shërben si **bazë për zhvillimin e mëvonshëm** të aplikacionit (me backend, p.sh. Firebase).
 
-In the output, you'll find options to open the app in a
+- Struktura është e organizuar në mënyrë të pastër me folderë si /app, /components, dhe /assets.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+##  Teknologjitë e përdorura
 
-## Get a fresh project
+| Teknologji        | Përshkrimi                           |
+|-------------------|--------------------------------------|
+| React Native (Expo)     | Platformë për ndërtimin e aplikacioneve mobile cross-platform        |
+| Expo Router       | Menaxhimi i navigimit midis ekraneve       |
+| React Hooks ( useState )    | Menaxhimi i të dhënave lokale|
+| Komponentët bazikë të RN| FlatList, TextInput, TouchableOpacity, SafeAreaView, StatusBar|
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
+##  Struktura e projektit
+
+Projekti ndahet në disa skedarë për funksionalitete specifike:
+
+```
+📁 StudentsApp/
+├── app/
+│   ├── _layout.jsx       
+│   ├── contactUs.jsx      
+│   ├── favorites.jsx      
+│   ├── index.jsx       
+│   ├── library.jsx    
+│   ├── privacypolicy.jsx       
+│   ├── search.jsx      
+│   ├── seecontentfor.jsx        
+│   ├── settings.jsx    
+│   └── termsofuse.jsx   
+│
+├── components/        
+├── assets\images      
+├── package.json      
+└── README.md          
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+##  🧭 Ekranet kryesore
 
-To learn more about developing your project with Expo, look at the following resources:
+🏠 Index (Home)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Përmban seksione si Class Recording dhe Scan Text.
 
-## Join the community
+- Ka pjesën My StudyLists dhe Continue Reading me disa libra të shfaqur për demonstrim.
 
-Join our community of developers creating universal apps.
+  <img src="assets/images/HomeScreen.png" alt="File Editor" width="200"/>
+---
+📚 Library
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Përdoruesi mund të shtojë libra të rinj përmes TextInput dhe butonit “Add Books”.
+
+- Përdor useState për ruajtjen e listës së librave (pa databazë).
+
+- Shfaq mesazhin “No books yet” kur lista është bosh.
+
+  <img src="assets/images/LibraryScreen.png" alt="File Editor" width="200"/>
+---
+⚙️ Settings
+
+Përmban lidhje për:
+- Terms of Use
+- Privacy Policy
+- Contact Us
+- Give Feedback
+
+   <img src="assets/images/SettingsScreen.png" alt="File Editor" width="200"/>
+---
+## 💻  Si ta ekzekutoni projektin
+...
+---
+## 🧠 Qëllimi i projektit
+
+## 👥 Ekipi i zhvillimit
+
+Ky projekt është zhvilluar nga:
+
+---
+
+## 📬 Na kontaktoni
+
+Për pyetje, sugjerime ose bashkëpunime, mund të përdorni seksionin Issues në GitHub ose të na shkruani personalisht.
+
+Faleminderit që provuat Student Notes & Materials App! 💜
