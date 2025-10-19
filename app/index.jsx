@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 15,
   },
-  logoImage: { width: 140, height: 80 },
+  logoImage: { width: 140, height: 80 , marginLeft:-25},
   scrollContainer: { padding: 20 },
   topCards: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   card: {
