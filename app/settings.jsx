@@ -14,11 +14,9 @@ const settingsItems = [
 export default function SettingsScreen() {
   const router = useRouter();
 
-  
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [selectedFeedback, setSelectedFeedback] = useState('like');
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
 
-  
   const handleContactUs = () => {
     const email = 'notesApp@gmail.com';
     const subject = 'Contact NotesApp';
@@ -28,12 +26,17 @@ export default function SettingsScreen() {
     Linking.openURL(mailtoUrl).catch(err => console.error('Error opening email app:', err));
   };
 
-  
   const handleFeedback = (option) => {
     console.log('User selected:', option);
-    setSelectedFeedback(option);
+
     if (option === 'later') {
-      setShowFeedbackModal(false); 
+      setShowFeedbackModal(false);
+    } else if (option === 'like' || option === 'not_happy') {
+      setSelectedFeedback(option);
+      setTimeout(() => {
+        setShowFeedbackModal(false);
+        setSelectedFeedback(null);
+      }, 1000);
     }
   };
 
@@ -51,15 +54,14 @@ export default function SettingsScreen() {
     </TouchableOpacity>
   );
 
-  
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.item}
       onPress={() => {
         if (item.id === '5') {
-          setShowFeedbackModal(true); 
+          setShowFeedbackModal(true);
         } else if (item.id === '4') {
-          handleContactUs(); 
+          handleContactUs();
         } else if (item.screen) {
           router.push(item.screen);
         }
@@ -96,16 +98,25 @@ export default function SettingsScreen() {
       >
         <View style={styles.overlay}>
           <View style={styles.modal}>
-            <Text style={styles.star}>⭐</Text>
-            <Text style={styles.title}>Enjoying the app?</Text>
-            <Text style={styles.subtitle}>
-              Please rate us on the app store{'\n'}
-              Help other students find out about us with a positive rating!
-            </Text>
+            {selectedFeedback === 'like' || selectedFeedback === 'not_happy' ? (
+              <>
+                <Text style={styles.star}>🙏</Text>
+                <Text style={styles.title}>Thank you for your feedback!</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.star}>⭐</Text>
+                <Text style={styles.title}>Enjoying the app?</Text>
+                <Text style={styles.subtitle}>
+                  Please rate us on the app store{'\n'}
+                  Help other students find out about us with a positive rating!
+                </Text>
 
-            {renderFeedbackButton('like', "Yes, I like it!")}
-            {renderFeedbackButton('not_happy', "No, I'm not happy")}
-            {renderFeedbackButton('later', "Not now")}
+                {renderFeedbackButton('like', "Yes, I like it!")}
+                {renderFeedbackButton('not_happy', "No, I'm not happy")}
+                {renderFeedbackButton('later', "Not now")}
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -165,8 +176,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 40,
   },
-
-
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -222,4 +231,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-
