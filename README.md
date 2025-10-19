@@ -54,7 +54,7 @@ Projekti ndahet në disa skedarë për funksionalitete specifike:
 
 ---
 
-##  🧭 Ekranet kryesore
+##  Ekranet kryesore
 
 🏠 Index (Home)
 
