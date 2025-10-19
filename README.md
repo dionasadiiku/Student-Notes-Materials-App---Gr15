@@ -116,19 +116,17 @@ Përmban lidhje për:
 
 - Dizajni është konzistent në të gjitha ekranet, për eksperiencë uniforme.
 ---
-## 💻  Si ta ekzekutoni projektin
-...
----
-## 🧠 Qëllimi i projektit
 
-## 👥 Ekipi i zhvillimit
+
+## Ekipi i zhvillimit
 
 Ky projekt është zhvilluar nga:
 
+- Arijana Braha  
+- Diona Sadiku  
+- Diell Fazliu  
+- Albin Maqastenda  
+- Erjon Mustafa  
+- Jon Llabjani
 ---
 
-## 📬 Na kontaktoni
-
-Për pyetje, sugjerime ose bashkëpunime, mund të përdorni seksionin Issues në GitHub ose të na shkruani personalisht.
-
-Faleminderit që provuat Student Notes & Materials App! 💜
