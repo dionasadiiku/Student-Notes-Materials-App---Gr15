@@ -5,6 +5,12 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'rea
 export default function App() {
   const router = useRouter();
 
+  const books = [
+    { id: '1', title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', cover: 'https://covers.openlibrary.org/b/id/7222246-L.jpg' },
+    { id: '8', title: 'Brave New World', author: 'Aldous Huxley', cover: 'https://covers.openlibrary.org/b/id/7884861-L.jpg' },
+    { id: '3', title: 'The Alchemist', author: 'Paulo Coelho', cover: 'https://covers.openlibrary.org/b/id/8235116-L.jpg' },
+  ];
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -54,9 +60,13 @@ export default function App() {
           <Text style={styles.sectionTitle}>Continue reading</Text>
           <Text style={styles.subtitle}>Login or Register to continue where you left off</Text>
 
-          <View style={styles.placeholderRow}>
-            {[1, 2, 3].map((_, i) => (
-              <View key={i} style={styles.placeholderCard} />
+          <View style={styles.bookRow}>
+            {books.map((book) => (
+              <TouchableOpacity key={book.id} style={styles.bookCard}>
+                <Image source={{ uri: book.cover }} style={styles.bookCover} />
+                <Text style={styles.bookTitle} numberOfLines={1}>{book.title}</Text>
+                <Text style={styles.bookAuthor} numberOfLines={1}>{book.author}</Text>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
@@ -71,7 +81,7 @@ export default function App() {
           <MaterialCommunityIcons name="book-open-outline" size={28} color="#000"/>
         </TouchableOpacity>
 
-<TouchableOpacity onPress={() => router.push("/search")}>
+        <TouchableOpacity onPress={() => router.push("/search")}>
           <Ionicons name="search-outline" size={28} color="#000" />
         </TouchableOpacity>
       </View>
@@ -122,12 +132,32 @@ const styles = StyleSheet.create({
   favoriteTitle: { fontSize: 16, fontWeight: '600' },
   favoriteSubtitle: { fontSize: 13, color: '#555' },
   continueSection: { marginTop: 20 },
-  placeholderRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  placeholderCard: {
+  bookRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  bookCard: {
     width: '30%',
+    backgroundColor: '#f9f0ff',
+    borderRadius: 12,
+    alignItems: 'center',
+    padding: 8,
+  },
+  bookCover: {
+    width: 70,
     height: 100,
-    backgroundColor: '#eee',
-    borderRadius: 10,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  bookTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  bookAuthor: {
+    fontSize: 11,
+    color: '#555',
+    textAlign: 'center',
   },
   footer: {
     height: 70,
