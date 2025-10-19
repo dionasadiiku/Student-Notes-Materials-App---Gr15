@@ -53,9 +53,15 @@ const [task, setTask] = useState("");
           <Text>{item.title}</Text>
           </Link>
         
-        <TouchableOpacity onPress={() => deleteTask(item.id)}>         //router.back() tkthen te faqja paraprake os eme push te nje faqe tjeter kudo qe don
-          <Text style={{color: 'red'}}>Delete</Text>
-        </TouchableOpacity>
+       <View style={styles.actions}>
+             <TouchableOpacity onPress={() => console.log("Saved:", item.title)}>
+               <Ionicons name="bookmark-outline" size={22} color="black" />
+             </TouchableOpacity>
+
+             <TouchableOpacity onPress={() => deleteTask(item.id)}>
+               <Ionicons name="trash-outline" size={22} color="red" />
+             </TouchableOpacity>
+          </View>
         </View>
       )}
       ItemSeparatorComponent={renderSeparator}
@@ -105,14 +111,15 @@ const styles =StyleSheet.create({
     borderColor: "black",
   },
   taskItem: {
-    borderWidth:1,
-    flex: 1,
+    borderWidth: 1,
     backgroundColor: "white",
     borderRadius: 8,
     padding: 15,
     borderColor: "black",
-    
-  
+    flexDirection: "row",           
+    justifyContent: "space-between", 
+    alignItems: "center",            
+    marginVertical: 5,    
   },
   list:{
   paddingHorizontal: 20,
@@ -136,5 +143,10 @@ const styles =StyleSheet.create({
     color: "gray",
     marginTop: 10,
     textAlign: "center"
-  }
+  },
+    actions: {
+    flexDirection: "row",      
+    alignItems: "center",
+    gap: 10,                   
+  },
 })
