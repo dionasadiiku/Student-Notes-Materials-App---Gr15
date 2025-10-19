@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { View, TextInput, FlatList, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useRouter } from "expo-router";
+import { useState } from 'react';
+import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Footer from './components/footer';
+import Header from './components/header';
 
 const mockData = [
   { id: '1', title: 'Math Notes' },
@@ -28,43 +31,48 @@ export default function Search() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={26} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Search</Text>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <Header />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={26} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Search</Text>
+        </View>
 
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={22} color="#555" style={{ marginRight: 8 }} />
-        <TextInput
-          style={styles.input}
-          placeholder="Search notes, materials..."
-          placeholderTextColor="#999"
-          value={query}
-          onChangeText={handleSearch}
-        />
-      </View>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={22} color="#555" style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.input}
+            placeholder="Search notes, materials..."
+            placeholderTextColor="#999"
+            value={query}
+            onChangeText={handleSearch}
+          />
+        </View>
 
-      {filtered.length === 0 && query !== '' ? (
-        <Text style={styles.noResults}>No results found</Text>
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.resultItem}>
-              <Text style={styles.resultText}>{item.title}</Text>
-            </TouchableOpacity>
-          )}
-        />
-      )}
-    </View>
+        {filtered.length === 0 && query !== '' ? (
+          <Text style={styles.noResults}>No results found</Text>
+        ) : (
+          <FlatList
+            data={filtered}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.resultItem}>
+                <Text style={styles.resultText}>{item.title}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        )}
+      </View>
+      <Footer />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {flex: 1, background: '#fff' },
   container: {
     flex: 1,
     backgroundColor: '#fff',

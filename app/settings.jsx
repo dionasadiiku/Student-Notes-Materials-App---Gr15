@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Modal, Linking } from 'react-native';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { FlatList, Linking, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Footer from './components/footer';
 
 const settingsItems = [
   { id: '1', title: 'See content for', value: 'University', screen: '/seecontentfor' },
@@ -81,11 +83,12 @@ export default function SettingsScreen() {
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
 
-      <FlatList
+      <FlatList style={{paddingHorizontal: 10}}
         data={settingsItems}
         renderItem={renderItem}
         keyExtractor={item => item.id}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
 
       <Text style={styles.version}>Version: 7.9.3.5583</Text>
@@ -120,6 +123,7 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
+      <Footer/>
     </SafeAreaView>
   );
 }
@@ -128,7 +132,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingHorizontal: 20,
   },
   header: {
     height: 60,
