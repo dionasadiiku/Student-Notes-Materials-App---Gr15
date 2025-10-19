@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { View, TextInput, FlatList, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 const mockData = [
   { id: '1', title: 'Math Notes' },
@@ -10,6 +11,7 @@ const mockData = [
 ];
 
 export default function Search() {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [filtered, setFiltered] = useState([]);
 
@@ -27,6 +29,13 @@ export default function Search() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={26} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Search</Text>
+      </View>
+
       <View style={styles.searchBar}>
         <Ionicons name="search" size={22} color="#555" style={{ marginRight: 8 }} />
         <TextInput
@@ -60,6 +69,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  backButton: {
+    marginRight: 10,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   searchBar: {
     flexDirection: 'row',
