@@ -81,6 +81,10 @@ export default function App() {
           <MaterialCommunityIcons name="book-open-outline" size={28} color="#000"/>
         </TouchableOpacity>
 
+          <TouchableOpacity onPress={() => router.push("/reminder")}>
+    <Ionicons name="notifications-outline" size={28} color="#000" />
+  </TouchableOpacity>
+
         <TouchableOpacity onPress={() => router.push("/search")}>
           <Ionicons name="search-outline" size={28} color="#000" />
         </TouchableOpacity>
