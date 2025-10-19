@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 const settingsItems = [
   { id: '1', title: 'See content for', value: 'University', screen: '/seecontentfor' },
   { id: '2', title: 'Terms of use', screen: '/termsofuse' },
-  { id: '3', title: 'Privacy policy', screen: '/privacyPolicy' },
+  { id: '3', title: 'Privacy policy', screen: '/privacypolicy' },
   { id: '4', title: 'Contact us' },
   { id: '5', title: 'Give feedback' }, 
 ];
