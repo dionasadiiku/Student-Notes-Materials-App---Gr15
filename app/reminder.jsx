@@ -19,6 +19,12 @@ export default function Reminder() {
     setNewReminder("");
   };
 
+
+    const deleteReminder = (itemToDelete) => {
+    setReminders(reminders.filter(item => item !== itemToDelete));
+  };
+
+
   return (
     <View style={styles.container}>
       <Header />
