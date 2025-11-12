@@ -62,7 +62,7 @@ export default function Footer({ onHomePress, onBookPress, onReminderPress, onSe
 const styles = StyleSheet.create({
   footer: {
     height: 80,
-    paddingTop: 10,
+    paddingTop: 18,
     backgroundColor: '#eab8dcff',
     flexDirection: 'row',
     justifyContent: 'space-around',

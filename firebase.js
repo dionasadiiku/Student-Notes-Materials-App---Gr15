@@ -1,0 +1,21 @@
+// firebase.js
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDh38fC4m6s1MzgyGrQMsIkaOQ_VfPnyCE",
+  authDomain: "bookmanagmentapp.firebaseapp.com",
+  projectId: "bookmanagmentapp",
+  storageBucket: "bookmanagmentapp.appspot.com",
+  messagingSenderId: "267500899327",
+  appId: "1:267500899327:web:db9856ace51f36df5935ca",
+  measurementId: "G-Y0NEW2HTNV",
+};
+
+// ✅ prevent re-initializing Firebase on hot reload
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export default app;
