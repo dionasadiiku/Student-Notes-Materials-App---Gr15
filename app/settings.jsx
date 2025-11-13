@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { db, auth } from "../firebase"; // import db dhe auth (auth përdoret vetëm për të ruajtur id/email në Firestore, nuk shfaqet në UI)
-
+import { db, auth } from "../firebase"; 
 import {
   FlatList,
   Linking,
@@ -42,12 +41,11 @@ export default function SettingsScreen() {
     Linking.openURL(mailtoUrl).catch(err => console.error("Error opening email app:", err));
   };
 
-  // ---------- CREATE: save feedback to Firestore ----------
+ 
   const saveFeedback = async (type) => {
     try {
       await addDoc(collection(db, "feedbacks"), {
-        type, // "like" | "not_happy"
-        // ruaj user info vetëm në Firestore (nuk do të shfaqet në UI)
+        type, 
         userId: auth?.currentUser?.uid ?? null,
         userEmail: auth?.currentUser?.email ?? null,
         status: "pending",
@@ -60,7 +58,7 @@ export default function SettingsScreen() {
     }
   };
 
-  // ---------- UPDATE (jo i shfaqur në UI) ----------
+  
   const updateFeedbackStatus = async (id, newStatus) => {
     try {
       await updateDoc(doc(db, "feedbacks", id), { status: newStatus });
@@ -71,7 +69,7 @@ export default function SettingsScreen() {
     }
   };
 
-  // ---------- DELETE (jo i shfaqur në UI) ----------
+
   const removeFeedback = async (id) => {
     try {
       await deleteDoc(doc(db, "feedbacks", id));
@@ -82,7 +80,7 @@ export default function SettingsScreen() {
     }
   };
 
-  // ---------- handleFeedback: close modal, save, show thank-you ----------
+
   const handleFeedback = async (option) => {
     if (option === "later") {
       setShowFeedbackModal(false);
@@ -90,17 +88,17 @@ export default function SettingsScreen() {
     }
 
     if (option === "like" || option === "not_happy") {
-      // Close feedback modal immediately for better UX
+      
       setShowFeedbackModal(false);
 
-      // Save to Firestore
+    
       const ok = await saveFeedback(option);
       if (!ok) {
         Alert.alert("Gabim", "Nuk u ruajt feedback. Provoni përsëri.");
         return;
       }
 
-      // Show thank-you message for 1.2s
+      
       setShowThankYou(true);
       setTimeout(() => setShowThankYou(false), 1200);
     }
@@ -149,7 +147,7 @@ export default function SettingsScreen() {
         <Text style={styles.version}>Version: 7.9.3.5583</Text>
       </View>
 
-      {/* Feedback modal */}
+    
       <Modal visible={showFeedbackModal} transparent animationType="fade" onRequestClose={() => setShowFeedbackModal(false)}>
         <View style={styles.overlay}>
           <View style={styles.modal}>
@@ -167,7 +165,7 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-      {/* Thank you modal (short) */}
+      
       <Modal visible={showThankYou} transparent animationType="fade">
         <View style={styles.overlay}>
           <View style={[styles.modal, { width: "70%", padding: 18 }]}>
