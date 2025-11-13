@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
 
   noResults: { textAlign: "center", marginTop: 30, fontSize: 16, color: "#999" },
 
-  /* Book card styles */
+
   bookCard: { marginRight: 12, width: 140 },
   bookImageWrap: { width: "100%", height: 180, borderRadius: 8, overflow: "hidden", backgroundColor: "#f0eef6" },
   bookImage: { width: "100%", height: "100%", resizeMode: "cover" },
