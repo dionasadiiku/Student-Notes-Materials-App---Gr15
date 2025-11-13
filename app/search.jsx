@@ -1,7 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useState, useEffect } from "react";
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Image,
+  Linking,
+  ActivityIndicator,
+} from "react-native";
 import Footer from "./components/footer";
 import Header from "./components/header";
 
@@ -16,13 +26,14 @@ export default function Search() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [filtered, setFiltered] = useState([]);
+  const [recommendedBooks, setRecommendedBooks] = useState([]);
+  const [loadingBooks, setLoadingBooks] = useState(false);
+  const [booksError, setBooksError] = useState(null);
 
   const [refreshKey, setRefreshKey] = useState(0);
+  const refreshSearch = () => setRefreshKey((p) => p + 1);
 
-  const refreshSearch = () => {
-    setRefreshKey(prev => prev + 1);
-  };
-
+  // Live search as user types: përdor handleSearch në onChangeText
   const handleSearch = (text) => {
     setQuery(text);
     if (text.trim() === "") {
@@ -36,7 +47,67 @@ export default function Search() {
   };
 
   const onSearchPress = () => {
+    // nëse preferon kërkim vetëm me buton, mund ta thërrasësh handleSearch(query) këtu
     handleSearch(query);
+  };
+
+  // Fetch rekomandime nga Google Books API
+  useEffect(() => {
+    const fetchRecommendedBooks = async () => {
+      setLoadingBooks(true);
+      setBooksError(null);
+      try {
+        const response = await fetch(
+          "https://www.googleapis.com/books/v1/volumes?q=subject:education&maxResults=8"
+        );
+        const data = await response.json();
+        setRecommendedBooks(data.items || []);
+      } catch (error) {
+        console.error("Error fetching recommended books:", error);
+        setBooksError("Could not load recommended books");
+        setRecommendedBooks([]);
+      } finally {
+        setLoadingBooks(false);
+      }
+    };
+    fetchRecommendedBooks();
+  }, []);
+
+  const openBookLink = async (url) => {
+    if (!url) return;
+    try {
+      await Linking.openURL(url);
+    } catch (err) {
+      console.error("Failed to open link:", err);
+    }
+  };
+
+  const renderRecommendedItem = ({ item }) => {
+    const thumbnail = item.volumeInfo.imageLinks?.thumbnail
+      ? item.volumeInfo.imageLinks.thumbnail.replace(/^http:\/\//i, "https://")
+      : null;
+    return (
+      <TouchableOpacity
+        style={styles.bookCard}
+        onPress={() => openBookLink(item.volumeInfo.infoLink)}
+      >
+        <View style={styles.bookImageWrap}>
+          {thumbnail ? (
+            <Image source={{ uri: thumbnail }} style={styles.bookImage} />
+          ) : (
+            <View style={styles.bookImagePlaceholder}>
+              <Text style={{ color: "#666", fontSize: 12 }}>No cover</Text>
+            </View>
+          )}
+        </View>
+        <Text numberOfLines={2} style={styles.bookTitle}>
+          {item.volumeInfo.title}
+        </Text>
+        <Text numberOfLines={1} style={styles.bookAuthors}>
+          {item.volumeInfo.authors?.join(", ") ?? "Unknown"}
+        </Text>
+      </TouchableOpacity>
+    );
   };
 
   return (
@@ -59,7 +130,7 @@ export default function Search() {
               placeholder="Search notes, materials..."
               placeholderTextColor="#999"
               value={query}
-              onChangeText={setQuery}
+              onChangeText={handleSearch} // live search as you type
             />
           </View>
           <TouchableOpacity style={styles.searchButton} onPress={onSearchPress}>
@@ -81,9 +152,30 @@ export default function Search() {
             contentContainerStyle={{ paddingBottom: 20 }}
           />
         )}
+
+        {/* Recommended Books section */}
+        <View style={{ marginTop: 10 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <Text style={{ fontSize: 18, fontWeight: "700" }}>Recommended Books</Text>
+            {loadingBooks && <ActivityIndicator size="small" />}
+          </View>
+
+          {booksError ? (
+            <Text style={{ color: "red", marginBottom: 8 }}>{booksError}</Text>
+          ) : (
+            <FlatList
+              data={recommendedBooks}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              renderItem={renderRecommendedItem}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            />
+          )}
+        </View>
       </View>
 
-      <Footer onSearchPress={refreshSearch}/>
+      <Footer onSearchPress={refreshSearch} />
     </View>
   );
 }
@@ -142,4 +234,12 @@ const styles = StyleSheet.create({
   resultText: { fontSize: 16, fontWeight: "500", color: "#1C1C1E" },
 
   noResults: { textAlign: "center", marginTop: 30, fontSize: 16, color: "#999" },
+
+  /* Book card styles */
+  bookCard: { marginRight: 12, width: 140 },
+  bookImageWrap: { width: "100%", height: 180, borderRadius: 8, overflow: "hidden", backgroundColor: "#f0eef6" },
+  bookImage: { width: "100%", height: "100%", resizeMode: "cover" },
+  bookImagePlaceholder: { flex: 1, justifyContent: "center", alignItems: "center" },
+  bookTitle: { marginTop: 8, fontWeight: "500", fontSize: 14 },
+  bookAuthors: { fontSize: 12, color: "#555" },
 });
