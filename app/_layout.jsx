@@ -1,7 +1,6 @@
-// app/_layout.jsx
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -9,25 +8,35 @@ import { auth } from "../firebase";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [loading, setLoading] = useState(true);
-  const router = useRouter(); 
+  const router = useRouter();
+  const segments = useSegments();
+  const [user, setUser] = useState(null);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        router.replace("/"); 
-      } else {
-        router.replace("/login"); 
-      }
-      setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setInitializing(false);
     });
 
     return unsubscribe;
   }, []);
 
-  if (loading) {
+  useEffect(() => {
+    if (initializing) return;
+
+    const inAuthGroup = segments[0] === "login" || segments[0] === "register";
+
+    if (!user && !inAuthGroup) {
+      router.replace("/login");
+    } else if (user && inAuthGroup) {
+      router.replace("/");
+    }
+  }, [user, initializing, segments]);
+
+  if (initializing) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
         <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
