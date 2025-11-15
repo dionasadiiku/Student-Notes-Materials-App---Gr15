@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { db, auth } from "../firebase"; 
 import {
   FlatList,
   Linking,
@@ -9,9 +10,12 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import Footer from "./components/footer";
 import Header from "./components/header";
+
+import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 
 const settingsItems = [
   { id: "1", title: "See content for", value: "University", screen: "/seecontentfor" },
@@ -24,13 +28,10 @@ const settingsItems = [
 export default function SettingsScreen() {
   const router = useRouter();
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [selectedFeedback, setSelectedFeedback] = useState(null);
-
+  const [showThankYou, setShowThankYou] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const refreshSettings = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+  const refreshSettings = () => setRefreshKey(prev => prev + 1);
 
   const handleContactUs = () => {
     const email = "notesApp@gmail.com";
@@ -40,28 +41,72 @@ export default function SettingsScreen() {
     Linking.openURL(mailtoUrl).catch(err => console.error("Error opening email app:", err));
   };
 
-  const handleFeedback = (option) => {
-    if (option === "later") setShowFeedbackModal(false);
-    else if (option === "like" || option === "not_happy") {
-      setSelectedFeedback(option);
-      setTimeout(() => {
-        setShowFeedbackModal(false);
-        setSelectedFeedback(null);
-      }, 1000);
+ 
+  const saveFeedback = async (type) => {
+    try {
+      await addDoc(collection(db, "feedbacks"), {
+        type, 
+        userId: auth?.currentUser?.uid ?? null,
+        userEmail: auth?.currentUser?.email ?? null,
+        status: "pending",
+        createdAt: serverTimestamp(),
+      });
+      return true;
+    } catch (err) {
+      console.error("Error saving feedback:", err);
+      return false;
+    }
+  };
+
+  
+  const updateFeedbackStatus = async (id, newStatus) => {
+    try {
+      await updateDoc(doc(db, "feedbacks", id), { status: newStatus });
+      return true;
+    } catch (err) {
+      console.error("Error updating feedback:", err);
+      return false;
+    }
+  };
+
+
+  const removeFeedback = async (id) => {
+    try {
+      await deleteDoc(doc(db, "feedbacks", id));
+      return true;
+    } catch (err) {
+      console.error("Error deleting feedback:", err);
+      return false;
+    }
+  };
+
+
+  const handleFeedback = async (option) => {
+    if (option === "later") {
+      setShowFeedbackModal(false);
+      return;
+    }
+
+    if (option === "like" || option === "not_happy") {
+      
+      setShowFeedbackModal(false);
+
+    
+      const ok = await saveFeedback(option);
+      if (!ok) {
+        Alert.alert("Gabim", "Nuk u ruajt feedback. Provoni përsëri.");
+        return;
+      }
+
+      
+      setShowThankYou(true);
+      setTimeout(() => setShowThankYou(false), 1200);
     }
   };
 
   const renderFeedbackButton = (option, label) => (
-    <TouchableOpacity
-      style={[
-        styles.feedbackButton,
-        selectedFeedback === option && option !== "later" && { backgroundColor: "#eab8dcff", borderColor: "#eab8dcff" },
-      ]}
-      onPress={() => handleFeedback(option)}
-    >
-      <Text style={selectedFeedback === option ? styles.primaryButtonText : styles.secondaryButtonText}>
-        {label}
-      </Text>
+    <TouchableOpacity style={styles.feedbackButton} onPress={() => handleFeedback(option)}>
+      <Text style={styles.secondaryButtonText}>{label}</Text>
     </TouchableOpacity>
   );
 
@@ -86,7 +131,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <Header onSettingsPress={refreshSettings}/>
+      <Header onSettingsPress={refreshSettings} />
 
       <View style={styles.content}>
         <Text style={styles.screenTitle}>Settings</Text>
@@ -102,32 +147,30 @@ export default function SettingsScreen() {
         <Text style={styles.version}>Version: 7.9.3.5583</Text>
       </View>
 
-      <Modal
-        visible={showFeedbackModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowFeedbackModal(false)}
-      >
+    
+      <Modal visible={showFeedbackModal} transparent animationType="fade" onRequestClose={() => setShowFeedbackModal(false)}>
         <View style={styles.overlay}>
           <View style={styles.modal}>
-            {selectedFeedback === "like" || selectedFeedback === "not_happy" ? (
-              <>
-                <Text style={styles.star}>🙏</Text>
-                <Text style={styles.title}>Thank you for your feedback!</Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.star}>⭐</Text>
-                <Text style={styles.title}>Enjoying the app?</Text>
-                <Text style={styles.subtitle}>
-                  Please rate us on the app store{'\n'}
-                  Help other students find out about us with a positive rating!
-                </Text>
-                {renderFeedbackButton("like", "Yes, I like it!")}
-                {renderFeedbackButton("not_happy", "No, I'm not happy")}
-                {renderFeedbackButton("later", "Not now")}
-              </>
-            )}
+            <Text style={styles.star}>⭐</Text>
+            <Text style={styles.title}>Enjoying the app?</Text>
+            <Text style={styles.subtitle}>
+              Please rate us on the app store{'\n'}
+              Help other students find out about us with a positive rating!
+            </Text>
+
+            {renderFeedbackButton("like", "Yes, I like it!")}
+            {renderFeedbackButton("not_happy", "No, I'm not happy")}
+            {renderFeedbackButton("later", "Not now")}
+          </View>
+        </View>
+      </Modal>
+
+      
+      <Modal visible={showThankYou} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={[styles.modal, { width: "70%", padding: 18 }]}>
+            <Text style={styles.star}>🙏</Text>
+            <Text style={styles.title}>Thank you for your feedback!</Text>
           </View>
         </View>
       </Modal>

@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword,signInWithPopup  } from 'firebase/auth';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { auth } from '../firebase';
+import { auth, googleProvider } from "../firebase";
+
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -40,7 +41,25 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }; 
+
+  const handleGoogleLogin = async () => {
+  if (Platform.OS !== "web") {
+    setError("Google popup sign-in works only on web. For mobile use expo-auth-session.");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    await signInWithPopup(auth, googleProvider);
+    router.replace("/");
+  } catch (err) {
+    console.log("Google sign-in error:", err);
+    setError(err?.message ?? "Google sign-in failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <KeyboardAvoidingView
@@ -75,6 +94,18 @@ const Login = () => {
 
         <TouchableOpacity style={styles.btn} onPress={handleLogin} disabled={loading}>
           <Text style={styles.btnText}>{loading ? "Logging in..." : "Login"}</Text>
+        </TouchableOpacity> 
+
+          
+        <Text style={{ marginTop: 12, color: "#666" }}>or</Text>
+
+      
+        <TouchableOpacity
+          onPress={handleGoogleLogin}
+          style={styles.googleBtn}
+          disabled={loading}
+        >
+          <Text style={styles.googleText}>{loading ? "Please wait..." : "Sign in with Google"}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/register")}>
@@ -121,6 +152,21 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   btnText: { color: "white", textAlign: "center", fontWeight: "600", fontSize: 16 },
+  link: { marginTop: 15, color: "#444", textAlign: "center" },
+  linkHighlight: { color: '#eab8dc', fontWeight: "600" },
+  error: { color: "red", marginTop: 10, textAlign: "center" }, 
+
+   googleBtn: {
+    backgroundColor: "#eab8dc",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 12,
+    width: "100%",
+  
+  },
+  googleText: { color: "white", textAlign: "center", fontWeight: "600", fontSize: 16 },
   link: { marginTop: 15, color: "#444", textAlign: "center" },
   linkHighlight: { color: '#eab8dc', fontWeight: "600" },
   error: { color: "red", marginTop: 10, textAlign: "center" },
