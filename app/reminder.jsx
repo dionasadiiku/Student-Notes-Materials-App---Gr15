@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FlatList,
   Image,
@@ -15,54 +15,79 @@ import * as ImagePicker from "expo-image-picker";
 import Footer from "./components/footer";
 import Header from "./components/header";
 
+
+import { db } from "../firebase";
+import { collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import { useAuth } from "./context/AuthContext";
+
+
+
 export default function Reminder() {
+ const { user } = useAuth();
+
   const [reminders, setReminders] = useState([]);
   const [newReminder, setNewReminder] = useState("");
-  const [refreshKey, setRefreshKey] = useState(0);
+  
+ useEffect(() => {
+    if (!user) return;
 
-  const refreshReminder = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+    const ref = collection(db, "users", user.uid, "reminders");
 
-  const deleteReminder = (id) => {
-    setReminders(reminders.filter((r) => r.id !== id));
-  };
+    const unsubscribe = onSnapshot(ref, (snapshot) => {
+      const list = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+      setReminders(list);
+    });
 
-  const addReminder = () => {
-    if (!newReminder.trim()) return;
+    return unsubscribe;
+  }, [user]);
 
-    setReminders([
-      ...reminders,
-      { id: Date.now().toString(), type: "text", text: newReminder }
-    ]);
+  // 🔹 Add text reminder
+  const addReminder = async () => {
+    if (!newReminder.trim() || !user) return;
+
+    await addDoc(collection(db, "users", user.uid, "reminders"), {
+      type: "text",
+      text: newReminder,
+      createdAt: serverTimestamp()
+    });
 
     setNewReminder("");
   };
 
+  // 🔹 Add photo reminder using camera
   const openCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      alert("Duhet leje për kamerë!");
+      alert("Kamera nuk ka leje!");
       return;
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      quality: 1,
-      allowsEditing: false
+      quality: 1
     });
 
     if (!result.canceled) {
-      setReminders([
-        ...reminders,
-        {
-          id: Date.now().toString(),
-          type: "photo",
-          uri: result.assets[0].uri
-        }
-      ]);
+      await addDoc(collection(db, "users", user.uid, "reminders"), {
+        type: "photo",
+        uri: result.assets[0].uri,
+        createdAt: serverTimestamp()
+      });
     }
   };
 
+  // 🔹 Delete reminder
+  const deleteReminder = async (id) => {
+    if (!user) return;
+
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "reminders", id));
+    } catch (error) {
+      console.log("Gabim:", error.message);
+    }
+  };
   return (
     <View style={styles.container}>
       <Header />
@@ -113,7 +138,7 @@ export default function Reminder() {
         />
       </KeyboardAvoidingView>
 
-      <Footer onReminderPress={refreshReminder} />
+     
     </View>
   );
 }
