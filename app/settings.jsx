@@ -30,6 +30,7 @@ export default function SettingsScreen() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const refreshSettings = () => setRefreshKey(prev => prev + 1);
 
@@ -51,9 +52,11 @@ export default function SettingsScreen() {
         status: "pending",
         createdAt: serverTimestamp(),
       });
+      setIsLoading(false);
       return true;
     } catch (err) {
       console.error("Error saving feedback:", err);
+      setIsLoading(false);
       return false;
     }
   };
@@ -158,9 +161,15 @@ export default function SettingsScreen() {
               Help other students find out about us with a positive rating!
             </Text>
 
-            {renderFeedbackButton("like", "Yes, I like it!")}
-            {renderFeedbackButton("not_happy", "No, I'm not happy")}
-            {renderFeedbackButton("later", "Not now")}
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#007AFF" style={{ marginVertical: 10 }} />
+            ) : (
+              <>
+                {renderFeedbackButton("like", "Yes, I like it!")}
+                {renderFeedbackButton("not_happy", "No, I'm not happy")}
+                {renderFeedbackButton("later", "Not now")}
+              </>
+            )}
           </View>
         </View>
       </Modal>

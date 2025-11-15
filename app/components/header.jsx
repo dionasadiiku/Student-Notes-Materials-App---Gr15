@@ -52,7 +52,7 @@ export default function Header({ onSettingsPress }) {
       <View style={styles.iconContainer}>
 
         <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-          <Ionicons name="log-out-outline" size={26} color="#000" />
+          <Ionicons name="log-out-outline" size={30} color="#000" />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleSettingsPress}>
@@ -65,13 +65,13 @@ export default function Header({ onSettingsPress }) {
 
 const styles = StyleSheet.create({
   header: {
-    height: 90, // ⬆️ increased height
+    height: 100,
     backgroundColor: "#eab8dcff",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 24, 
+    paddingTop: 45, 
   },
   logoImage: { width: 160, height: 100, marginLeft: -25 },
   iconContainer: {
