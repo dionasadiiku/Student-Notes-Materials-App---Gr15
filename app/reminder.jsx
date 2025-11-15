@@ -42,6 +42,7 @@ export default function Reminder() {
   };
 
 
+<<<<<<< HEAD
   const openCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
@@ -64,6 +65,10 @@ export default function Reminder() {
         },
       ]);
     }
+=======
+    const deleteReminder = (itemToDelete) => {
+    setReminders(reminders.filter(item => item !== itemToDelete));
+>>>>>>> 6881afecf1a67d9ad13519226544c1deec6b6848
   };
 
 
@@ -185,4 +190,27 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 10,
   },
+<<<<<<< HEAD
 });
+=======
+  button: {
+    backgroundColor: "#eab8dcff",
+    borderWidth: 1,
+    borderColor: "#000",
+    paddingHorizontal: 16,
+    marginLeft: 10,
+    borderRadius: 8,
+    justifyContent: "center",
+    height: 50,
+  },
+  buttonText: { color: "#000", fontWeight: "600", textAlign: "center" },
+  reminder: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    backgroundColor: "#eab8dcff",
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+})
+>>>>>>> 6881afecf1a67d9ad13519226544c1deec6b6848
