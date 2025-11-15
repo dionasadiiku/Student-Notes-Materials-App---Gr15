@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 
 export default function TermsOfUseScreen() {
   return (
+    
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Terms of Use – NotesApp</Text>
 
