@@ -18,6 +18,7 @@ import Header from "./components/header";
 import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 
 const settingsItems = [
+  { id: "0", title: "Profile", screen: "/profile" }, 
   { id: "1", title: "See content for", value: "University", screen: "/seecontentfor" },
   { id: "2", title: "Terms of use", screen: "/termsofuse" },
   { id: "3", title: "Privacy policy", screen: "/privacypolicy" },
