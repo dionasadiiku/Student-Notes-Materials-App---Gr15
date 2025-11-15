@@ -1,32 +1,67 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Footer from "./components/footer";
 import Header from "./components/header";
 
+import { db } from "../firebase";
+import { collection, addDoc, onSnapshot, serverTimestamp, doc, deleteDoc } from "firebase/firestore";
+import { useAuth } from "./context/AuthContext";
+
 const Index = () => {
+  const { user, loading } = useAuth();
   const [books, setBooks] = useState([]);
   const [book, setBook] = useState("");
 
-  const [refreshKey, setRefreshKey] = useState(0);
+  // 🔹 Load books from Firestore
+  useEffect(() => {
+    if (!user) return;
 
-  const refreshBook = () => {
-    setRefreshKey(prev => prev + 1);
+    const booksRef = collection(db, "users", user.uid, "books");
+
+    const unsubscribe = onSnapshot(booksRef, (snapshot) => {
+      const list = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setBooks(list);
+    });
+
+    return unsubscribe; // cleanup
+  }, [user]);
+
+  // 🔹 Add book to Firestore
+  const addBook = async () => {
+    if (!book.trim() || !user) return;
+
+    try {
+      await addDoc(collection(db, "users", user.uid, "books"), {
+        title: book,
+        createdAt: serverTimestamp()
+      });
+      setBook("");
+    } catch (error) {
+      console.log("Gabim gjatë shtimit:", error.message);
+    }
   };
 
-  const addBook = () => {
-    if (!book.trim()) return;
-    setBooks([...books, { id: Date.now().toString(), title: book }]);
-    setBook("");
+  // 🔹 Delete book from Firestore
+  const deleteBookFirestore = async (id) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "books", id));
+    } catch (error) {
+      console.log("Gabim gjatë fshirjes:", error.message);
+    }
   };
-
-  const deleteBook = (id) => setBooks(books.filter((item) => item.id !== id));
 
   const renderSeparator = () => <View style={styles.separator} />;
   const renderHeader = () => <Text style={styles.listHeader}>Your Notes</Text>;
   const renderFooter = () => <Text style={styles.listFooter}>End of the library</Text>;
   const renderEmptyList = () => <Text style={styles.emptyText}>No books yet.</Text>;
+
+  if (loading) return <Text>Loading...</Text>; // show while auth is loading
 
   return (
     <View style={styles.container}>
@@ -64,7 +99,7 @@ const Index = () => {
                 <TouchableOpacity onPress={() => console.log("Saved:", item.title)}>
                   <Ionicons name="bookmark-outline" size={22} color="black" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteBook(item.id)}>
+                <TouchableOpacity onPress={() => deleteBookFirestore(item.id)}>
                   <Ionicons name="trash-outline" size={22} color="red" />
                 </TouchableOpacity>
               </View>
@@ -78,7 +113,7 @@ const Index = () => {
         />
       </View>
 
-      <Footer onBookPress={refreshBook}/>
+      <Footer onBookPress={() => {}} />
     </View>
   );
 };
