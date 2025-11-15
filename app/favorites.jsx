@@ -3,9 +3,11 @@ import { collection, deleteDoc, doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from 'react';
 import { FlatList, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from "../firebase";
+import FavoriteModal from "../components/FavoriteModal";
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState([]);
+  const [selectedBook, setSelectedBook] = useState(null);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -42,7 +44,7 @@ export default function Favorites() {
   const renderBook = ({ item }) => (
     <TouchableOpacity
       style={styles.bookCard}
-      onPress={() => openBookLink(item.link)}
+      onPress={() => setSelectedBook(item)}
       activeOpacity={0.8}
     >
       <TouchableOpacity
@@ -76,6 +78,12 @@ export default function Favorites() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 16 }}
+      />
+
+      <FavoriteModal
+        visible={selectedBook !== null}
+        book={selectedBook}
+        onClose={() => setSelectedBook(null)}
       />
     </View>
   );

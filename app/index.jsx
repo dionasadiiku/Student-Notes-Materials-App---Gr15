@@ -17,7 +17,6 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
 
-  // Monitor user auth & favorites
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -108,7 +107,6 @@ export default function App() {
     }
   ];
 
-  // Sort books: favorites first
   const sortedBooks = [...books].sort((a, b) => {
     const aFav = favorites.some(fav => fav.id === a.id);
     const bFav = favorites.some(fav => fav.id === b.id);
