@@ -1,81 +1,104 @@
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-const books = [
-  { id: '1', title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', cover: 'https://covers.openlibrary.org/b/id/7222246-L.jpg' },
-  { id: '2', title: '1984', author: 'George Orwell', cover: 'https://covers.openlibrary.org/b/id/7222246-L.jpg' },
-  { id: '3', title: 'To Kill a Mockingbird', author: 'Harper Lee', cover: 'https://covers.openlibrary.org/b/id/8225265-L.jpg' },
-  { id: '4', title: 'Moby Dick', author: 'Herman Melville', cover: 'https://covers.openlibrary.org/b/id/5552222-L.jpg' },
-  { id: '5', title: 'Pride and Prejudice', author: 'Jane Austen', cover: 'https://covers.openlibrary.org/b/id/8091016-L.jpg' },
-  { id: '6', title: 'The Catcher in the Rye', author: 'J.D. Salinger', cover: 'https://covers.openlibrary.org/b/id/8231996-L.jpg' },
-  { id: '7', title: 'The Hobbit', author: 'J.R.R. Tolkien', cover: 'https://covers.openlibrary.org/b/id/6979861-L.jpg' },
-  { id: '8', title: 'Brave New World', author: 'Aldous Huxley', cover: 'https://covers.openlibrary.org/b/id/7884861-L.jpg' },
-  { id: '9', title: 'The Alchemist', author: 'Paulo Coelho', cover: 'https://covers.openlibrary.org/b/id/8235116-L.jpg' },
-  { id: '10', title: 'Harry Potter and the Sorcerer’s Stone', author: 'J.K. Rowling', cover: 'https://covers.openlibrary.org/b/id/7984916-L.jpg' },
-];
+import { Ionicons } from '@expo/vector-icons';
+import { collection, deleteDoc, doc, onSnapshot } from "firebase/firestore";
+import { useEffect, useState } from 'react';
+import { FlatList, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { auth, db } from "../firebase";
 
 export default function Favorites() {
+  const [favorites, setFavorites] = useState([]);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    const favRef = collection(db, "users", auth.currentUser.uid, "favorites");
+
+    const unsubscribe = onSnapshot(favRef, (snap) => {
+      const list = snap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setFavorites(list);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const removeFavorite = async (bookId) => {
+    if (!auth.currentUser) return;
+    const favRef = doc(db, "users", auth.currentUser.uid, "favorites", bookId);
+    try {
+      await deleteDoc(favRef);
+    } catch (error) {
+      console.log("Error removing favorite:", error);
+    }
+  };
+
+  const openBookLink = (link) => {
+    if (link) {
+      Linking.openURL(link).catch(err => console.log("Failed to open link:", err));
+    }
+  };
+
   const renderBook = ({ item }) => (
-    <TouchableOpacity style={styles.bookCard}>
-      <Image source={{ uri: item.cover }} style={styles.coverImage} />
-      <View style={styles.bookInfo}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.author}>{item.author}</Text>
-      </View>
+    <TouchableOpacity
+      style={styles.bookCard}
+      onPress={() => openBookLink(item.link)}
+      activeOpacity={0.8}
+    >
+      <TouchableOpacity
+        onPress={() => removeFavorite(item.id)}
+        style={{ alignSelf: "flex-end", marginBottom: 4 }}
+      >
+        <Ionicons name="heart" size={20} color="pink" />
+      </TouchableOpacity>
+
+      <Image source={{ uri: item.cover }} style={styles.bookCover} />
+      <Text style={styles.bookTitle}>{item.title}</Text>
+      <Text style={styles.bookAuthor}>{item.author}</Text>
     </TouchableOpacity>
   );
+
+  if (favorites.length === 0) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ fontSize: 16, color: "#666" }}>No favorites yet. Add some!</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>My Favorite Books</Text>
       <FlatList
-        data={books}
+        data={favorites}
         keyExtractor={(item) => item.id}
         renderItem={renderBook}
-        contentContainerStyle={styles.list}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 16 }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  list: {
-    paddingBottom: 16,
-  },
+  container: { flex: 1, backgroundColor: "#fdfcff", paddingTop: 20 },
+  header: { fontSize: 24, fontWeight: "bold", textAlign: "center", marginBottom: 20, marginTop: 30 },
   bookCard: {
-    flexDirection: 'row',
-    backgroundColor: '#f9f0ff',
+    width: 140,
+    backgroundColor: "#f9f3ff",
+    borderRadius: 14,
     padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
-    alignItems: 'center',
+    marginRight: 16,
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    height: 220
   },
-  coverImage: {
-    width: 60,
-    height: 90,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  bookInfo: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  author: {
-    fontSize: 14,
-    color: '#555',
-    marginTop: 4,
-  },
+  bookCover: { width: 85, height: 125, borderRadius: 10, marginBottom: 10 },
+  bookTitle: { fontSize: 13, fontWeight: '600', textAlign: 'center', color: '#333', marginBottom: 4 },
+  bookAuthor: { fontSize: 11, color: '#777', textAlign: 'center' },
 });
