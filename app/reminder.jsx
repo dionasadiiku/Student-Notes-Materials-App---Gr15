@@ -1,5 +1,17 @@
 import { useState } from "react";
-import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+
+import * as ImagePicker from "expo-image-picker";
 import Footer from "./components/footer";
 import Header from "./components/header";
 
@@ -13,11 +25,47 @@ export default function Reminder() {
     setRefreshKey(prev => prev + 1);
   };
 
+
+  const deleteReminder = (id) => {
+    setReminders(reminders.filter((r) => r.id !== id));
+  };
+
   const addReminder = () => {
     if (!newReminder.trim()) return;
-    setReminders([...reminders, newReminder]);
+
+    setReminders([
+      ...reminders,
+      { id: Date.now().toString(), type: "text", text: newReminder }
+    ]);
+
     setNewReminder("");
   };
+
+
+  const openCamera = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      alert("Duhet leje për kamerë!");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 1,
+      allowsEditing: false,
+    });
+
+    if (!result.canceled) {
+      setReminders([
+        ...reminders,
+        {
+          id: Date.now().toString(),
+          type: "photo",
+          uri: result.assets[0].uri,
+        },
+      ]);
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -29,6 +77,7 @@ export default function Reminder() {
       >
         <Text style={styles.title}>Reminders</Text>
 
+        {}
         <View style={styles.inputRow}>
           <TextInput
             placeholder="Write your reminder..."
@@ -42,28 +91,38 @@ export default function Reminder() {
           </TouchableOpacity>
         </View>
 
+        {}
+        <TouchableOpacity style={styles.scanButton} onPress={openCamera}>
+          <Text style={styles.scanText}>Scan (kamera)</Text>
+        </TouchableOpacity>
+
+        {}
         <FlatList
           data={reminders}
-          keyExtractor={(item, i) => i.toString()}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ paddingBottom: 20 }}
           renderItem={({ item }) => (
             <View style={styles.reminderRow}>
-              <Text style={styles.reminderText}>{item}</Text>
-              <TouchableOpacity onPress={() => deleteReminder(item)}>
+              {item.type === "text" ? (
+                <Text style={styles.reminderText}>{item.text}</Text>
+              ) : (
+                <Image source={{ uri: item.uri }} style={styles.photo} />
+              )}
+
+              <TouchableOpacity onPress={() => deleteReminder(item.id)}>
                 <Text style={styles.deleteText}>✕</Text>
               </TouchableOpacity>
             </View>
           )}
-          contentContainerStyle={{ paddingBottom: 20 }}
         />
       </KeyboardAvoidingView>
 
-      <Footer onReminderPress={refreshReminder}/>
+      <Footer onReminderPress={refreshReminder} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: { flex: 1, backgroundColor: "#fff" },
   content: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   title: { fontSize: 28, fontWeight: "700", marginBottom: 20, textAlign: "center" },
@@ -91,13 +150,21 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
   },
   buttonText: { fontSize: 16, fontWeight: "600", color: "#000" },
+
+  scanButton: {
+    backgroundColor: "#d48de0",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  scanText: {
+    color: "#000",
+    fontWeight: "700",
+    fontSize: 16,
+  },
 
   reminderRow: {
     backgroundColor: "#eab8dcff",
@@ -107,46 +174,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
   },
-  reminderText: { fontSize: 16, fontWeight: "500", color: "#1C1C1E" },
-  deleteText: { fontSize: 18, fontWeight: "600", color: "#FF3B30" },
+  reminderText: { fontSize: 16, fontWeight: "500", color: "#1C1C1E", flex: 1 },
 
+  deleteText: { fontSize: 22, fontWeight: "600", color: "#FF3B30", marginLeft: 10 },
 
-  container: {flex: 1, backgroundColor: '#fff'},
-  content: { flex: 1, paddingHorizontal: 20 },
-  title: { fontSize: 28, fontWeight: "bold", marginVertical: 20, textAlign: "center" },
-  inputRow: { flexDirection: "row", marginBottom: 15 },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: "#f3e6f9",
+  photo: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginRight: 10,
   },
-  button: {
-    backgroundColor: "#eab8dcff",
-    borderWidth: 1,
-    borderColor: "#000",
-    paddingHorizontal: 16,
-    marginLeft: 10,
-    borderRadius: 8,
-    justifyContent: "center",
-    height: 50,
-  },
-  buttonText: { color: "#000", fontWeight: "600", textAlign: "center" },
-  reminder: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-    backgroundColor: "#eab8dcff",
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-})
+});

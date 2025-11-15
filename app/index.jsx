@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -7,6 +8,27 @@ import Header from './components/header';
 
 export default function App() {
   const router = useRouter();
+
+  const openCamera = async () => {
+  
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+  if (!permission.granted) {
+    alert("Camera permission is required!");
+    return;
+  }
+
+  const result = await ImagePicker.launchCameraAsync({
+    quality: 1,
+    allowsEditing: true,
+  });
+
+  if (!result.canceled) {
+    alert("Photo captured successfully!");
+    console.log(result.assets[0].uri);
+  }
+};
+
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -31,10 +53,14 @@ export default function App() {
             <Text style={styles.cardText}>Class recording</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.card, { backgroundColor: '#f4d9f8' }]}>
-            <Ionicons name="camera-outline" size={32} color="#000" />
-            <Text style={styles.cardText}>Scan Text</Text>
-          </TouchableOpacity>
+          <TouchableOpacity 
+  style={[styles.card, { backgroundColor: '#f4d9f8' }]}
+  onPress={openCamera}
+>
+  <Ionicons name="camera-outline" size={32} color="#000" />
+  <Text style={styles.cardText}>Scan Text</Text>
+</TouchableOpacity>
+
         </View>
 
         <View style={styles.studylistSection}>
