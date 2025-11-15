@@ -6,20 +6,20 @@ import Footer from "./components/footer";
 import Header from "./components/header";
 
 import { db } from "../firebase";
-import { collection, addDoc, onSnapshot, serverTimestamp, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, onSnapshot, serverTimestamp, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { useAuth } from "./context/AuthContext";
 
 const Index = () => {
   const { user, loading } = useAuth();
   const [books, setBooks] = useState([]);
   const [book, setBook] = useState("");
+  const [editingBookId, setEditingBookId] = useState(null);
 
   // 🔹 Load books from Firestore
   useEffect(() => {
     if (!user) return;
 
     const booksRef = collection(db, "users", user.uid, "books");
-
     const unsubscribe = onSnapshot(booksRef, (snapshot) => {
       const list = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -28,7 +28,7 @@ const Index = () => {
       setBooks(list);
     });
 
-    return unsubscribe; // cleanup
+    return unsubscribe;
   }, [user]);
 
   // 🔹 Add book to Firestore
@@ -56,12 +56,24 @@ const Index = () => {
     }
   };
 
+  // 🔹 Update book title
+  const updateBookFirestore = async (id, newTitle) => {
+    if (!user || newTitle === "") return;
+    try {
+      const bookRef = doc(db, "users", user.uid, "books", id);
+      await updateDoc(bookRef, { title: newTitle });
+      setEditingBookId(null);
+    } catch (error) {
+      console.log("Gabim gjatë përditësimit:", error.message);
+    }
+  };
+
   const renderSeparator = () => <View style={styles.separator} />;
   const renderHeader = () => <Text style={styles.listHeader}>Your Notes</Text>;
   const renderFooter = () => <Text style={styles.listFooter}>End of the library</Text>;
   const renderEmptyList = () => <Text style={styles.emptyText}>No books yet.</Text>;
 
-  if (loading) return <Text>Loading...</Text>; // show while auth is loading
+  if (loading) return <Text>Loading...</Text>;
 
   return (
     <View style={styles.container}>
@@ -92,17 +104,37 @@ const Index = () => {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.bookItem}>
-              <Link href="/tasks/23">
-                <Text>{item.title}</Text>
-              </Link>
-              <View style={styles.actions}>
-                <TouchableOpacity onPress={() => console.log("Saved:", item.title)}>
-                  <Ionicons name="bookmark-outline" size={22} color="black" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteBookFirestore(item.id)}>
-                  <Ionicons name="trash-outline" size={22} color="red" />
-                </TouchableOpacity>
-              </View>
+              {editingBookId === item.id ? (
+                <>
+                  <TextInput
+                    style={[styles.input, { flex: 1, marginRight: 10 }]}
+                    value={item.editingTitle ?? item.title}
+                    onChangeText={(text) => {
+                      setBooks(prev =>
+                        prev.map(b => b.id === item.id ? { ...b, editingTitle: text } : b)
+                      );
+                    }}
+                  />
+                  <TouchableOpacity onPress={() => updateBookFirestore(item.id, item.editingTitle ?? item.title)}>
+                    <Ionicons name="checkmark-outline" size={24} color="green" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setEditingBookId(null)}>
+                    <Ionicons name="close-outline" size={24} color="red" />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text style={{ flex: 1 }}>{item.title}</Text>
+                  <View style={styles.actions}>
+                    <TouchableOpacity onPress={() => setEditingBookId(item.id)}>
+                      <Ionicons name="pencil-outline" size={22} color="black" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => deleteBookFirestore(item.id)}>
+                      <Ionicons name="trash-outline" size={22} color="red" />
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
             </View>
           )}
           ItemSeparatorComponent={renderSeparator}
