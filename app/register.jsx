@@ -62,12 +62,13 @@ const Register = () => {
         <Text style={styles.subtitle}>Sign up to start your reading journey</Text>
 
         <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          style={styles.input}
-          keyboardType="email-address"
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        style={styles.input}
+        keyboardType="email-address"
+        placeholderTextColor="rgba(0, 0, 0, 0.4)" 
         />
 
         <TextInput
@@ -76,6 +77,7 @@ const Register = () => {
           onChangeText={setPassword}
           secureTextEntry
           style={styles.input}
+          placeholderTextColor="rgba(0, 0, 0, 0.4)" 
         />
 
         <TextInput
@@ -84,7 +86,9 @@ const Register = () => {
           onChangeText={setConfirmPassword}
           secureTextEntry
           style={styles.input}
+          placeholderTextColor="rgba(0, 0, 0, 0.4)"
         />
+
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 

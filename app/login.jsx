@@ -72,12 +72,13 @@ const Login = () => {
         <Text style={styles.subtitle}>Login to your account to continue reading</Text>
 
         <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          style={styles.input}
-          keyboardType="email-address"
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        style={styles.input}
+        keyboardType="email-address"
+        placeholderTextColor="rgba(0,0,0,0.4)" 
         />
 
         <TextInput
@@ -86,6 +87,7 @@ const Login = () => {
           onChangeText={setPassword}
           secureTextEntry
           style={styles.input}
+          placeholderTextColor="rgba(0,0,0,0.4)" 
         />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -140,6 +142,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginVertical: 6,
     borderRadius: 10,
+    placeholderTextColor: "#b04040ff",
   },
   btn: {
     backgroundColor: '#eab8dc',

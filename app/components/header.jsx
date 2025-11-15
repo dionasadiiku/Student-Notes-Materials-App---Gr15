@@ -52,7 +52,7 @@ export default function Header({ onSettingsPress }) {
       <View style={styles.iconContainer}>
 
         <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-          <Ionicons name="log-out-outline" size={26} color="#000" />
+          <Ionicons name="log-out-outline" size={30} color="#000" />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleSettingsPress}>

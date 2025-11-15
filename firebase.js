@@ -1,4 +1,3 @@
-// firebase.js
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
@@ -14,7 +13,6 @@ const firebaseConfig = {
   measurementId: "G-Y0NEW2HTNV",
 };
 
-// ✅ prevent re-initializing Firebase on hot reload
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
