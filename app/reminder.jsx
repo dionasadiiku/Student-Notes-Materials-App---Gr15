@@ -18,13 +18,11 @@ import Header from "./components/header";
 export default function Reminder() {
   const [reminders, setReminders] = useState([]);
   const [newReminder, setNewReminder] = useState("");
-
   const [refreshKey, setRefreshKey] = useState(0);
 
   const refreshReminder = () => {
     setRefreshKey(prev => prev + 1);
   };
-
 
   const deleteReminder = (id) => {
     setReminders(reminders.filter((r) => r.id !== id));
@@ -41,8 +39,6 @@ export default function Reminder() {
     setNewReminder("");
   };
 
-
-<<<<<<< HEAD
   const openCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
@@ -52,7 +48,7 @@ export default function Reminder() {
 
     const result = await ImagePicker.launchCameraAsync({
       quality: 1,
-      allowsEditing: false,
+      allowsEditing: false
     });
 
     if (!result.canceled) {
@@ -61,16 +57,11 @@ export default function Reminder() {
         {
           id: Date.now().toString(),
           type: "photo",
-          uri: result.assets[0].uri,
-        },
+          uri: result.assets[0].uri
+        }
       ]);
     }
-=======
-    const deleteReminder = (itemToDelete) => {
-    setReminders(reminders.filter(item => item !== itemToDelete));
->>>>>>> 6881afecf1a67d9ad13519226544c1deec6b6848
   };
-
 
   return (
     <View style={styles.container}>
@@ -82,26 +73,26 @@ export default function Reminder() {
       >
         <Text style={styles.title}>Reminders</Text>
 
-        {}
+        {/* Add Text Reminder */}
         <View style={styles.inputRow}>
           <TextInput
             placeholder="Write your reminder..."
             style={styles.input}
             value={newReminder}
             onChangeText={setNewReminder}
-            placeholderTextColor={'#000'}
+            placeholderTextColor="#000"
           />
           <TouchableOpacity style={styles.button} onPress={addReminder}>
             <Text style={styles.buttonText}>Add</Text>
           </TouchableOpacity>
         </View>
 
-        {}
+        {/* Scan With Camera */}
         <TouchableOpacity style={styles.scanButton} onPress={openCamera}>
           <Text style={styles.scanText}>Scan (kamera)</Text>
         </TouchableOpacity>
 
-        {}
+        {/* Reminder List */}
         <FlatList
           data={reminders}
           keyExtractor={(item) => item.id}
@@ -141,11 +132,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: "#f3e6f9",
     color: "#000",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
   },
   button: {
     marginLeft: 10,
@@ -154,7 +140,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 16,
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "center"
   },
   buttonText: { fontSize: 16, fontWeight: "600", color: "#000" },
 
@@ -163,12 +149,12 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginBottom: 20,
-    alignItems: "center",
+    alignItems: "center"
   },
   scanText: {
     color: "#000",
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 16
   },
 
   reminderRow: {
@@ -178,7 +164,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "center"
   },
   reminderText: { fontSize: 16, fontWeight: "500", color: "#1C1C1E", flex: 1 },
 
@@ -188,29 +174,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 10,
-    marginRight: 10,
-  },
-<<<<<<< HEAD
+    marginRight: 10
+  }
 });
-=======
-  button: {
-    backgroundColor: "#eab8dcff",
-    borderWidth: 1,
-    borderColor: "#000",
-    paddingHorizontal: 16,
-    marginLeft: 10,
-    borderRadius: 8,
-    justifyContent: "center",
-    height: 50,
-  },
-  buttonText: { color: "#000", fontWeight: "600", textAlign: "center" },
-  reminder: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-    backgroundColor: "#eab8dcff",
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-})
->>>>>>> 6881afecf1a67d9ad13519226544c1deec6b6848
