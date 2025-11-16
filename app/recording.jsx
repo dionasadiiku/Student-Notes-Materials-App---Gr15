@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Header from "./components/header";
 import Footer from "./components/footer";
 import { db } from "../firebase";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { collection, addDoc, Timestamp, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "firebase/firestore";
 
 export default function RecordingScreen() {
   const [isRecording, setIsRecording] = useState(false);
@@ -23,6 +23,18 @@ export default function RecordingScreen() {
   const [editedName, setEditedName] = useState("");
 
  
+  useEffect(() => {
+    const q = query(collection(db, "recordings"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const recs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setRecordings(recs);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const startRecording = async () => {
     try {
       if (Platform.OS === "web") {
@@ -53,7 +65,6 @@ export default function RecordingScreen() {
     }
   };
 
-
   const stopRecording = async () => {
     setSaving(true);
     try {
@@ -74,7 +85,6 @@ export default function RecordingScreen() {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         url = URL.createObjectURL(blob);
 
-       
         const audioEl = new window.Audio(url);
         await new Promise(res => {
           audioEl.onloadedmetadata = () => {
@@ -98,22 +108,19 @@ export default function RecordingScreen() {
         url = uri;
 
         const status = await rec.getStatusAsync();
-        duration = status.durationMillis / 1000; // ms -> sekonda
+        duration = status.durationMillis / 1000;
         recordingRef.current = null;
       }
 
       const newRecording = {
-        id: Date.now().toString(),
         name,
         url,
         duration,
         createdAt: Timestamp.now(),
       };
 
-      setRecordings(prev => [newRecording, ...prev]);
       setIsRecording(false);
-
-      
+  
       await addDoc(collection(db, "recordings"), newRecording);
 
     } catch (err) {
@@ -123,7 +130,6 @@ export default function RecordingScreen() {
       setSaving(false);
     }
   };
-
 
   const playRecording = async (item) => {
     try {
@@ -148,7 +154,7 @@ export default function RecordingScreen() {
 
         sound.setOnPlaybackStatusUpdate(status => {
           if (status.didJustFinish) {
-            sound.unloadAsync().catch(() => { });
+            sound.unloadAsync().catch(() => {});
             soundRef.current = null;
             setPlayingId(null);
           }
@@ -160,20 +166,34 @@ export default function RecordingScreen() {
     }
   };
 
-  const deleteRecording = (item) => {
-    setRecordings(prev => prev.filter(r => r.id !== item.id));
+ 
+  const updateRecordingName = async (id) => {
+    if (!editedName) return;
+    try {
+      const docRef = doc(db, "recordings", id);
+      await updateDoc(docRef, { name: editedName });
+      setEditingId(null);
+      setEditedName("");
+    } catch (err) {
+      console.error("updateRecordingName error:", err);
+      alert("Could not update recording name: " + err.message);
+    }
   };
 
-  const updateRecordingName = (id) => {
-    setRecordings(prev => prev.map(r => (r.id === id ? { ...r, name: editedName } : r)));
-    setEditingId(null);
-    setEditedName("");
+
+  const deleteRecording = async (item) => {
+    try {
+      const docRef = doc(db, "recordings", item.id);
+      await deleteDoc(docRef);
+    } catch (err) {
+      console.error("deleteRecording error:", err);
+      alert("Could not delete recording: " + err.message);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Header />
-
       <Text style={styles.title}>🎙️ Class Recordings</Text>
 
       <TouchableOpacity
