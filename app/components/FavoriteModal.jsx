@@ -1,14 +1,22 @@
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { doc, updateDoc } from "firebase/firestore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { auth, db } from "../../firebase";
 
 export default function FavoriteModal({ visible, onClose, book }) {
-  const [progress, setProgress] = useState(book?.progress || 0);
-  const [notes, setNotes] = useState(book?.notes || "");
-  const [tags, setTags] = useState(book?.tags || "");
+  const [progress, setProgress] = useState(0);
+  const [notes, setNotes] = useState("");
+  const [tags, setTags] = useState("");
+
+  useEffect(() => {
+    if (book) {
+      setProgress(book.progress || 0);
+      setNotes(book.notes || "");
+      setTags(book.tags || "");
+    }
+  }, [book]);
 
   const handleSave = async () => {
     if (!auth.currentUser || !book?.id) return;
@@ -24,15 +32,18 @@ export default function FavoriteModal({ visible, onClose, book }) {
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modal}>
-
+          
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
             <Ionicons name="close" size={24} color="#000" />
           </TouchableOpacity>
 
           <Text style={styles.title}>{book?.title}</Text>
 
-          <Text style={styles.label}>Reading Progress {Math.round(progress * 100)}%</Text>
-          <Slider 
+          <Text style={styles.label}>
+            Reading Progress {Math.round(progress * 100)}%
+          </Text>
+
+          <Slider
             style={{ width: "100%" }}
             minimumValue={0}
             maximumValue={1}
@@ -68,12 +79,47 @@ export default function FavoriteModal({ visible, onClose, book }) {
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.45)" },
-  modal: { width: "85%", backgroundColor: "#fff", borderRadius: 16, padding: 20 },
-  closeBtn: { alignSelf: "flex-end" },
-  title: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
-  label: { fontWeight: "600", marginTop: 10 },
-  input: { borderWidth: 1, borderColor: "#ddd", borderRadius: 10, marginTop: 5, padding: 8 },
-  saveBtn: { backgroundColor: "#7d57f0", paddingVertical: 10, borderRadius: 10, marginTop: 18, alignItems: "center" },
-  saveText: { color: "#fff", fontWeight: "bold", fontSize: 16 }
+  overlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.45)"
+  },
+  modal: {
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20
+  },
+  closeBtn: {
+    alignSelf: "flex-end"
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12
+  },
+  label: {
+    fontWeight: "600",
+    marginTop: 10
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    marginTop: 5,
+    padding: 8
+  },
+  saveBtn: {
+    backgroundColor: "#7d57f0",
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginTop: 18,
+    alignItems: "center"
+  },
+  saveText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16
+  }
 });
