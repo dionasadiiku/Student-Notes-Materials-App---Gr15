@@ -4,6 +4,8 @@ import { Audio } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
 import Header from "./components/header";
 import Footer from "./components/footer";
+import { db } from "../firebase";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
 
 export default function RecordingScreen() {
   const [isRecording, setIsRecording] = useState(false);
@@ -20,7 +22,7 @@ export default function RecordingScreen() {
   const [editingId, setEditingId] = useState(null);
   const [editedName, setEditedName] = useState("");
 
-  // 🔹 Start recording
+ 
   const startRecording = async () => {
     try {
       if (Platform.OS === "web") {
@@ -51,12 +53,13 @@ export default function RecordingScreen() {
     }
   };
 
-  // 🔹 Stop recording
+
   const stopRecording = async () => {
     setSaving(true);
     try {
       let url;
       let name = `Recording ${new Date().toLocaleString()}`;
+      let duration = 0; 
 
       if (Platform.OS === "web") {
         if (!mediaRecorderRef.current) return;
@@ -68,15 +71,22 @@ export default function RecordingScreen() {
         });
 
         if (!chunksRef.current.length) return alert("No audio recorded!");
-
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         url = URL.createObjectURL(blob);
+
+       
+        const audioEl = new window.Audio(url);
+        await new Promise(res => {
+          audioEl.onloadedmetadata = () => {
+            duration = audioEl.duration;
+            res();
+          };
+        });
 
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(t => t.stop());
           streamRef.current = null;
         }
-
         mediaRecorderRef.current = null;
         chunksRef.current = [];
       } else {
@@ -85,14 +95,27 @@ export default function RecordingScreen() {
 
         await rec.stopAndUnloadAsync();
         const uri = rec.getURI();
-        recordingRef.current = null;
-
         url = uri;
+
+        const status = await rec.getStatusAsync();
+        duration = status.durationMillis / 1000; // ms -> sekonda
+        recordingRef.current = null;
       }
 
-      const newRecording = { id: Date.now().toString(), name, url };
+      const newRecording = {
+        id: Date.now().toString(),
+        name,
+        url,
+        duration,
+        createdAt: Timestamp.now(),
+      };
+
       setRecordings(prev => [newRecording, ...prev]);
       setIsRecording(false);
+
+      
+      await addDoc(collection(db, "recordings"), newRecording);
+
     } catch (err) {
       console.error("stopRecording error:", err);
       alert("Could not save recording: " + err.message);
@@ -101,7 +124,7 @@ export default function RecordingScreen() {
     }
   };
 
-  // 🔹 Play recording
+
   const playRecording = async (item) => {
     try {
       if (Platform.OS === "web") {
@@ -109,11 +132,11 @@ export default function RecordingScreen() {
           webAudioRef.current.pause();
           webAudioRef.current = null;
         }
-        const audio = new Audio(item.url);
+        const audio = new window.Audio(item.url);
         webAudioRef.current = audio;
         setPlayingId(item.id);
         audio.onended = () => setPlayingId(null);
-        audio.play();
+        await audio.play();
       } else {
         if (soundRef.current) {
           await soundRef.current.unloadAsync();
@@ -125,7 +148,7 @@ export default function RecordingScreen() {
 
         sound.setOnPlaybackStatusUpdate(status => {
           if (status.didJustFinish) {
-            sound.unloadAsync().catch(()=>{});
+            sound.unloadAsync().catch(() => { });
             soundRef.current = null;
             setPlayingId(null);
           }
@@ -137,12 +160,10 @@ export default function RecordingScreen() {
     }
   };
 
-  // 🔹 Delete recording
   const deleteRecording = (item) => {
     setRecordings(prev => prev.filter(r => r.id !== item.id));
   };
 
-  // 🔹 Rename recording
   const updateRecordingName = (id) => {
     setRecordings(prev => prev.map(r => (r.id === id ? { ...r, name: editedName } : r)));
     setEditingId(null);
@@ -151,7 +172,6 @@ export default function RecordingScreen() {
 
   return (
     <View style={styles.container}>
-      {/* 🔹 Header */}
       <Header />
 
       <Text style={styles.title}>🎙️ Class Recordings</Text>
@@ -210,7 +230,6 @@ export default function RecordingScreen() {
         )}
       />
 
-      {/* 🔹 Footer */}
       <Footer />
     </View>
   );
