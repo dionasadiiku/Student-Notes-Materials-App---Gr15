@@ -1,31 +1,31 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  TextInput,
-  ActivityIndicator,
-  Platform,
-  Alert,
-} from "react-native";
-import { Audio } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
-import Header from "./components/header";
-import Footer from "./components/footer";
-import { db, auth } from "../firebase";
+import { Audio } from "expo-av";
 import {
-  collection,
-  addDoc,
-  doc,
-  deleteDoc,
-  updateDoc,
   Timestamp,
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
   getDocs,
   query,
+  updateDoc,
   where,
 } from "firebase/firestore";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { auth, db } from "../firebase";
+import Footer from "./components/footer";
+import Header from "./components/header";
 
 export default function RecordingScreen() {
   const [isRecording, setIsRecording] = useState(false);
@@ -252,88 +252,92 @@ export default function RecordingScreen() {
   return (
     <View style={styles.container}>
       <Header />
-      <Text style={styles.title}>🎙️ Class Recordings</Text>
 
-      <TouchableOpacity
-        style={[styles.recordButton, { backgroundColor: isRecording ? "#fdecec" : "#e6dbfa" }]}
-        onPress={isRecording ? stopRecording : startRecording}
-        disabled={saving}
-      >
-        <Ionicons
-          name={isRecording ? "stop-circle" : "mic-circle"}
-          size={80}
-          color={isRecording ? "#ff4d6d" : "#8a4af3"}
-        />
-        <Text style={styles.buttonText}>
-          {isRecording ? "Stop Recording" : "Start Recording"}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.content}>
+        <Text style={styles.title}>🎙️ Class Recordings</Text>
 
-      {saving && (
-        <View style={styles.savingBox}>
-          <ActivityIndicator size="small" color="#8a4af3" />
-          <Text style={{ color: "#555" }}>Processing...</Text>
-        </View>
-      )}
+        <TouchableOpacity
+          style={[styles.recordButton, { backgroundColor: isRecording ? "#fdecec" : "#e6dbfa" }]}
+          onPress={isRecording ? stopRecording : startRecording}
+          disabled={saving}
+        >
+          <Ionicons
+            name={isRecording ? "stop-circle" : "mic-circle"}
+            size={80}
+            color={isRecording ? "#ff4d6d" : "#8a4af3"}
+          />
+          <Text style={styles.buttonText}>
+            {isRecording ? "Stop Recording" : "Start Recording"}
+          </Text>
+        </TouchableOpacity>
 
-      <FlatList
-        data={recordings}
-        keyExtractor={item => item.docId}
-        ListEmptyComponent={<Text style={styles.emptyText}>No recordings yet.</Text>}
-        renderItem={({ item }) => (
-          <View style={styles.recordingCard}>
-            {editingId === item.docId ? (
-              <>
-                <TextInput
-                  style={styles.input}
-                  value={editedName}
-                  onChangeText={setEditedName}
-                />
-                <TouchableOpacity onPress={() => updateRecordingName(item)}>
-                  <Ionicons name="checkmark-outline" size={24} color="green" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setEditingId(null)}>
-                  <Ionicons name="close-outline" size={24} color="red" />
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={styles.meta}>
-                    {item.createdAt?.toDate
-                      ? item.createdAt.toDate().toLocaleString()
-                      : ""} • {Math.round(item.duration)}s
-                  </Text>
-                </View>
-
-                <View style={styles.actions}>
-                  <TouchableOpacity onPress={() => playRecording(item)}>
-                    <Ionicons
-                      name={playingId === item.docId ? "pause-circle" : "play-circle"}
-                      size={28}
-                      color="#8a4af3"
-                    />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => {
-                      setEditingId(item.docId);
-                      setEditedName(item.name);
-                    }}
-                  >
-                    <Ionicons name="pencil-outline" size={22} color="#000" />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity onPress={() => deleteRecording(item)}>
-                    <Ionicons name="trash-outline" size={22} color="red" />
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
+        {saving && (
+          <View style={styles.savingBox}>
+            <ActivityIndicator size="small" color="#8a4af3" />
+            <Text style={{ color: "#555" }}>Processing...</Text>
           </View>
         )}
-      />
+
+        <FlatList
+          data={recordings}
+          keyExtractor={item => item.docId}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          ListEmptyComponent={<Text style={styles.emptyText}>No recordings yet.</Text>}
+          renderItem={({ item }) => (
+            <View style={styles.recordingCard}>
+              {editingId === item.docId ? (
+                <>
+                  <TextInput
+                    style={styles.input}
+                    value={editedName}
+                    onChangeText={setEditedName}
+                  />
+                  <TouchableOpacity onPress={() => updateRecordingName(item)}>
+                    <Ionicons name="checkmark-outline" size={24} color="green" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setEditingId(null)}>
+                    <Ionicons name="close-outline" size={24} color="red" />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.name}>{item.name}</Text>
+                    <Text style={styles.meta}>
+                      {item.createdAt?.toDate
+                        ? item.createdAt.toDate().toLocaleString()
+                        : ""} • {Math.round(item.duration)}s
+                    </Text>
+                  </View>
+
+                  <View style={styles.actions}>
+                    <TouchableOpacity onPress={() => playRecording(item)}>
+                      <Ionicons
+                        name={playingId === item.docId ? "pause-circle" : "play-circle"}
+                        size={28}
+                        color="#8a4af3"
+                      />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        setEditingId(item.docId);
+                        setEditedName(item.name);
+                      }}
+                    >
+                      <Ionicons name="pencil-outline" size={22} color="#000" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => deleteRecording(item)}>
+                      <Ionicons name="trash-outline" size={22} color="red" />
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
+          )}
+        />
+      </View>
 
       <Footer />
     </View>
@@ -341,15 +345,57 @@ export default function RecordingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fdfcff" },
-  title: { fontSize: 26, fontWeight: "700", color: "#3b0068", textAlign: "center", marginBottom: 20 },
-  recordButton: { alignItems: "center", justifyContent: "center", borderRadius: 20, paddingVertical: 20, marginBottom: 25 },
+  container: { flex: 1, backgroundColor: "#fff" },
+
+  // same as Search
+  content: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
+
+  title: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#3b0068",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+
+  recordButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 20,
+    paddingVertical: 20,
+    marginBottom: 25,
+  },
+
   buttonText: { marginTop: 10, fontSize: 16, fontWeight: "600", color: "#333" },
   savingBox: { alignItems: "center", marginBottom: 12 },
-  recordingCard: { flexDirection: "row", alignItems: "center", backgroundColor: "#f4d9f8", borderRadius: 16, padding: 14, marginBottom: 10 },
-  input: { flex: 1, backgroundColor: "#fff", borderRadius: 12, padding: 8, borderWidth: 1, borderColor: "#ddd", marginRight: 10 },
+
+  recordingCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f4d9f8",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  input: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    marginRight: 10,
+  },
+
   name: { fontSize: 15, fontWeight: "600", color: "#333" },
   actions: { flexDirection: "row", alignItems: "center", gap: 10 },
   emptyText: { textAlign: "center", color: "#999", marginTop: 20 },
   meta: { fontSize: 12, color: "#555", marginTop: 2 },
 });
+

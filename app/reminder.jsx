@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -16,19 +16,19 @@ import Footer from "./components/footer";
 import Header from "./components/header";
 
 
+import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
-import { collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "./context/AuthContext";
 
 
 
 export default function Reminder() {
- const { user } = useAuth();
+  const { user } = useAuth();
 
   const [reminders, setReminders] = useState([]);
   const [newReminder, setNewReminder] = useState("");
-  
- useEffect(() => {
+
+  useEffect(() => {
     if (!user) return;
 
     const ref = collection(db, "users", user.uid, "reminders");
@@ -44,7 +44,6 @@ export default function Reminder() {
     return unsubscribe;
   }, [user]);
 
-  // 🔹 Add text reminder
   const addReminder = async () => {
     if (!newReminder.trim() || !user) return;
 
@@ -57,7 +56,6 @@ export default function Reminder() {
     setNewReminder("");
   };
 
-  // 🔹 Add photo reminder using camera
   const openCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
@@ -78,7 +76,6 @@ export default function Reminder() {
     }
   };
 
-  // 🔹 Delete reminder
   const deleteReminder = async (id) => {
     if (!user) return;
 
@@ -98,7 +95,6 @@ export default function Reminder() {
       >
         <Text style={styles.title}>Reminders</Text>
 
-        {/* Add Text Reminder */}
         <View style={styles.inputRow}>
           <TextInput
             placeholder="Write your reminder..."
@@ -112,12 +108,10 @@ export default function Reminder() {
           </TouchableOpacity>
         </View>
 
-        {/* Scan With Camera */}
         <TouchableOpacity style={styles.scanButton} onPress={openCamera}>
           <Text style={styles.scanText}>Scan (kamera)</Text>
         </TouchableOpacity>
 
-        {/* Reminder List */}
         <FlatList
           data={reminders}
           keyExtractor={(item) => item.id}
@@ -138,7 +132,7 @@ export default function Reminder() {
         />
       </KeyboardAvoidingView>
 
-     
+      <Footer />
     </View>
   );
 }
