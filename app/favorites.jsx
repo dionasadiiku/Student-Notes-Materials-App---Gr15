@@ -3,7 +3,7 @@ import { collection, deleteDoc, doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from 'react';
 import { FlatList, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from "../firebase";
-import FavoriteModal from "../components/FavoriteModal";
+import FavoriteModal from "./components/FavoriteModal";
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState([]);

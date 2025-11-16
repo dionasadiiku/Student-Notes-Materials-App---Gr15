@@ -1,10 +1,9 @@
-import React, { useState } from "react";
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
-import Slider from "@react-native-community/slider";
 import { Ionicons } from "@expo/vector-icons";
-import { db } from "../firebase";
+import Slider from "@react-native-community/slider";
 import { doc, updateDoc } from "firebase/firestore";
-import { auth } from "../firebase";
+import { useState } from "react";
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { auth, db } from "../../firebase";
 
 export default function FavoriteModal({ visible, onClose, book }) {
   const [progress, setProgress] = useState(book?.progress || 0);
