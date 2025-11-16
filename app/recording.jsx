@@ -14,18 +14,17 @@ import { Audio } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
 import Header from "./components/header";
 import Footer from "./components/footer";
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 import {
   collection,
   addDoc,
-  setDoc,
   doc,
   deleteDoc,
   updateDoc,
   Timestamp,
   getDocs,
   query,
-  orderBy,
+  where,
 } from "firebase/firestore";
 
 export default function RecordingScreen() {
@@ -43,11 +42,17 @@ export default function RecordingScreen() {
   const [editingId, setEditingId] = useState(null);
   const [editedName, setEditedName] = useState("");
 
-  
   useEffect(() => {
     const loadRecordings = async () => {
       try {
-        const q = query(collection(db, "recordings"), orderBy("createdAt", "desc"));
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const q = query(
+          collection(db, "recordings"),
+          where("userId", "==", user.uid)
+        );
+
         const snap = await getDocs(q);
         const items = snap.docs.map(d => ({ ...d.data(), docId: d.id }));
         setRecordings(items);
@@ -55,6 +60,7 @@ export default function RecordingScreen() {
         console.error("loadRecordings error:", err);
       }
     };
+
     loadRecordings();
   }, []);
 
@@ -64,27 +70,32 @@ export default function RecordingScreen() {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         streamRef.current = stream;
         chunksRef.current = [];
-
         const mr = new MediaRecorder(stream);
         mediaRecorderRef.current = mr;
 
         mr.ondataavailable = (e) => {
           if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
         };
+
         mr.start();
         setIsRecording(true);
       } else {
         const { granted } = await Audio.requestPermissionsAsync();
-        if (!granted) return alert("Microphone permission required!");
-        await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+        if (!granted) return;
 
-        const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+        });
+
+        const { recording } = await Audio.Recording.createAsync(
+          Audio.RecordingOptionsPresets.HIGH_QUALITY
+        );
         recordingRef.current = recording;
         setIsRecording(true);
       }
     } catch (err) {
       console.error("startRecording error:", err);
-      alert("Cannot start recording: " + err.message);
     }
   };
 
@@ -94,8 +105,9 @@ export default function RecordingScreen() {
       let url;
       let duration = 0;
 
-     
-      const snapAll = await getDocs(collection(db, "recordings"));
+      const snapAll = await getDocs(
+        query(collection(db, "recordings"), where("userId", "==", auth.currentUser.uid))
+      );
       const nextIndex = snapAll.size + 1;
       const name = `Recording ${nextIndex}`;
 
@@ -108,12 +120,6 @@ export default function RecordingScreen() {
           mr.stop();
         });
 
-        if (!chunksRef.current.length) {
-          alert("No audio recorded!");
-          setSaving(false);
-          setIsRecording(false);
-          return;
-        }
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         url = URL.createObjectURL(blob);
 
@@ -125,22 +131,16 @@ export default function RecordingScreen() {
           };
         });
 
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(t => t.stop());
-          streamRef.current = null;
-        }
+        streamRef.current?.getTracks().forEach(t => t.stop());
         mediaRecorderRef.current = null;
         chunksRef.current = [];
       } else {
-        if (!recordingRef.current) return;
         const rec = recordingRef.current;
-
         await rec.stopAndUnloadAsync();
-        const uri = rec.getURI();
-        url = uri;
+        url = rec.getURI();
 
         const status = await rec.getStatusAsync();
-        duration = status.durationMillis / 1000; // ms -> seconds
+        duration = status.durationMillis / 1000;
         recordingRef.current = null;
       }
 
@@ -149,17 +149,15 @@ export default function RecordingScreen() {
         url,
         duration,
         createdAt: Timestamp.now(),
+        userId: auth.currentUser.uid,
       };
 
-      
       const docRef = await addDoc(collection(db, "recordings"), newRecording);
-
-      
       setRecordings(prev => [{ ...newRecording, docId: docRef.id }, ...prev]);
+
       setIsRecording(false);
     } catch (err) {
       console.error("stopRecording error:", err);
-      alert("Could not save recording: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -167,47 +165,36 @@ export default function RecordingScreen() {
 
   const playRecording = async (item) => {
     try {
-      
       if (playingId === item.docId) {
         if (Platform.OS === "web") {
-          if (webAudioRef.current) {
-            webAudioRef.current.pause();
-            webAudioRef.current = null;
-          }
+          webAudioRef.current?.pause();
+          webAudioRef.current = null;
         } else {
-          if (soundRef.current) {
-            await soundRef.current.pauseAsync();
-            await soundRef.current.unloadAsync().catch(()=>{});
-            soundRef.current = null;
-          }
+          soundRef.current?.pauseAsync();
+          soundRef.current?.unloadAsync();
+          soundRef.current = null;
         }
         setPlayingId(null);
         return;
       }
 
-    
       if (Platform.OS === "web") {
-        if (webAudioRef.current) {
-          webAudioRef.current.pause();
-          webAudioRef.current = null;
-        }
-        const audio = new window.Audio(item.url);
+        const audio = new Audio(item.url);
         webAudioRef.current = audio;
         setPlayingId(item.docId);
         audio.onended = () => setPlayingId(null);
         await audio.play();
       } else {
-        if (soundRef.current) {
-          await soundRef.current.unloadAsync();
-          soundRef.current = null;
-        }
-        const { sound } = await Audio.Sound.createAsync({ uri: item.url }, { shouldPlay: true });
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: item.url },
+          { shouldPlay: true }
+        );
         soundRef.current = sound;
         setPlayingId(item.docId);
 
         sound.setOnPlaybackStatusUpdate(status => {
           if (status.didJustFinish) {
-            sound.unloadAsync().catch(() => { });
+            sound.unloadAsync();
             soundRef.current = null;
             setPlayingId(null);
           }
@@ -215,97 +202,56 @@ export default function RecordingScreen() {
       }
     } catch (err) {
       console.error("playRecording error:", err);
-      setPlayingId(null);
     }
   };
 
   const deleteRecording = (item) => {
-  
-  if (Platform.OS === "web") {
-    const ok = window.confirm("Are you sure you want to delete this recording?");
-    if (!ok) return;
-
-    return actuallyDelete(item);
-  }
-
-  
-  Alert.alert(
-    "Delete recording",
-    "Are you sure you want to delete this recording?",
-    [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => actuallyDelete(item),
-      },
-    ]
-  );
-};
-
-const actuallyDelete = async (item) => {
-  try {
-    
-    if (playingId === item.docId) {
-      if (Platform.OS === "web" && webAudioRef.current) {
-        webAudioRef.current.pause();
-        webAudioRef.current = null;
-      }
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync().catch(() => {});
-        soundRef.current = null;
-      }
-      setPlayingId(null);
+    if (Platform.OS === "web") {
+      if (!confirm("Delete?")) return;
+      return actuallyDelete(item);
     }
 
-    
-    await deleteDoc(doc(db, "recordings", item.docId));
-    console.log("Deleted from Firestore:", item.docId);
+    Alert.alert("Delete", "Delete recording?", [
+      { text: "Cancel" },
+      { text: "Delete", onPress: () => actuallyDelete(item) },
+    ]);
+  };
 
-    
-    if (
-      Platform.OS === "web" &&
-      item.url &&
-      item.url.startsWith("blob:") &&
-      URL.revokeObjectURL
-    ) {
-      URL.revokeObjectURL(item.url);
+  const actuallyDelete = async (item) => {
+    try {
+      if (playingId === item.docId) {
+        webAudioRef.current?.pause();
+        soundRef.current?.unloadAsync();
+      }
+
+      await deleteDoc(doc(db, "recordings", item.docId));
+      setRecordings(prev => prev.filter(r => r.docId !== item.docId));
+    } catch (err) {
+      console.error("deleteRecording error:", err);
     }
-
-    
-    setRecordings((prev) => prev.filter((r) => r.docId !== item.docId));
-  } catch (err) {
-    console.error("deleteRecording error:", err);
-    alert("Could not delete recording: " + err.message);
-  }
-};
-
+  };
 
   const updateRecordingName = async (item) => {
     const newName = editedName.trim();
-    if (!newName) {
-      alert("Name cannot be empty");
-      return;
-    }
+    if (!newName) return;
 
-    
-    setRecordings(prev => prev.map(r => (r.docId === item.docId ? { ...r, name: newName } : r)));
+    setRecordings(prev =>
+      prev.map(r => (r.docId === item.docId ? { ...r, name: newName } : r))
+    );
+
     setEditingId(null);
     setEditedName("");
 
-    
     try {
       await updateDoc(doc(db, "recordings", item.docId), { name: newName });
     } catch (err) {
       console.error("updateRecordingName error:", err);
-      alert("Could not update name: " + err.message);
     }
   };
 
   return (
     <View style={styles.container}>
       <Header />
-
       <Text style={styles.title}>🎙️ Class Recordings</Text>
 
       <TouchableOpacity
@@ -313,14 +259,20 @@ const actuallyDelete = async (item) => {
         onPress={isRecording ? stopRecording : startRecording}
         disabled={saving}
       >
-        <Ionicons name={isRecording ? "stop-circle" : "mic-circle"} size={80} color={isRecording ? "#ff4d6d" : "#8a4af3"} />
-        <Text style={styles.buttonText}>{isRecording ? "Stop Recording" : "Start Recording"}</Text>
+        <Ionicons
+          name={isRecording ? "stop-circle" : "mic-circle"}
+          size={80}
+          color={isRecording ? "#ff4d6d" : "#8a4af3"}
+        />
+        <Text style={styles.buttonText}>
+          {isRecording ? "Stop Recording" : "Start Recording"}
+        </Text>
       </TouchableOpacity>
 
       {saving && (
         <View style={styles.savingBox}>
           <ActivityIndicator size="small" color="#8a4af3" />
-          <Text style={{ color: "#555" }}>Processing recording...</Text>
+          <Text style={{ color: "#555" }}>Processing...</Text>
         </View>
       )}
 
@@ -328,62 +280,59 @@ const actuallyDelete = async (item) => {
         data={recordings}
         keyExtractor={item => item.docId}
         ListEmptyComponent={<Text style={styles.emptyText}>No recordings yet.</Text>}
-       renderItem={({ item }) => (
-  <View style={styles.recordingCard}>
-    {editingId === item.docId ? (
-      <>
-        <TextInput
-          style={styles.input}
-          value={editedName}
-          onChangeText={setEditedName}
-          placeholder="Edit name..."
-        />
-        <TouchableOpacity onPress={() => updateRecordingName(item)}>
-          <Ionicons name="checkmark-outline" size={24} color="green" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setEditingId(null)}>
-          <Ionicons name="close-outline" size={24} color="red" />
-        </TouchableOpacity>
-      </>
-    ) : (
-      <>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.meta}>
-            {item.createdAt?.toDate
-              ? item.createdAt.toDate().toLocaleString()
-              : ""}
-            {" • "} {Math.round(item.duration)}s
-          </Text>
-        </View>
+        renderItem={({ item }) => (
+          <View style={styles.recordingCard}>
+            {editingId === item.docId ? (
+              <>
+                <TextInput
+                  style={styles.input}
+                  value={editedName}
+                  onChangeText={setEditedName}
+                />
+                <TouchableOpacity onPress={() => updateRecordingName(item)}>
+                  <Ionicons name="checkmark-outline" size={24} color="green" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setEditingId(null)}>
+                  <Ionicons name="close-outline" size={24} color="red" />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.name}>{item.name}</Text>
+                  <Text style={styles.meta}>
+                    {item.createdAt?.toDate
+                      ? item.createdAt.toDate().toLocaleString()
+                      : ""} • {Math.round(item.duration)}s
+                  </Text>
+                </View>
 
-        <View style={styles.actions}>
-          <TouchableOpacity onPress={() => playRecording(item)}>
-            <Ionicons
-              name={playingId === item.docId ? "pause-circle" : "play-circle"}
-              size={28}
-              color="#8a4af3"
-            />
-          </TouchableOpacity>
+                <View style={styles.actions}>
+                  <TouchableOpacity onPress={() => playRecording(item)}>
+                    <Ionicons
+                      name={playingId === item.docId ? "pause-circle" : "play-circle"}
+                      size={28}
+                      color="#8a4af3"
+                    />
+                  </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => {
-              setEditingId(item.docId);
-              setEditedName(item.name);
-            }}
-          >
-            <Ionicons name="pencil-outline" size={22} color="#000" />
-          </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEditingId(item.docId);
+                      setEditedName(item.name);
+                    }}
+                  >
+                    <Ionicons name="pencil-outline" size={22} color="#000" />
+                  </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => deleteRecording(item)}>
-            <Ionicons name="trash-outline" size={22} color="red" />
-          </TouchableOpacity>
-        </View>
-      </>
-    )}
-  </View>
-)}
-
+                  <TouchableOpacity onPress={() => deleteRecording(item)}>
+                    <Ionicons name="trash-outline" size={22} color="red" />
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        )}
       />
 
       <Footer />
@@ -402,6 +351,5 @@ const styles = StyleSheet.create({
   name: { fontSize: 15, fontWeight: "600", color: "#333" },
   actions: { flexDirection: "row", alignItems: "center", gap: 10 },
   emptyText: { textAlign: "center", color: "#999", marginTop: 20 },
-  meta: { fontSize: 12, color: "#555", marginTop: 2 }
-
+  meta: { fontSize: 12, color: "#555", marginTop: 2 },
 });
