@@ -120,7 +120,10 @@ export default function App() {
 
         {/* Top cards */}
         <View style={styles.topCards}>
-          <TouchableOpacity style={[styles.card, { backgroundColor: "#e6dbfa" }]}>
+           <TouchableOpacity
+            style={[styles.card, { backgroundColor: "#e6dbfa" }]}
+            onPress={() => router.push("/recording")}
+          >
             <MaterialCommunityIcons name="presentation-play" size={32} color="#000" />
             <Text style={styles.cardText}>Class recording</Text>
           </TouchableOpacity>

@@ -1,0 +1,230 @@
+import { useEffect, useRef, useState } from "react";
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, TextInput, ActivityIndicator, Platform } from "react-native";
+import { Audio } from "expo-av";
+import { Ionicons } from "@expo/vector-icons";
+import Header from "./components/header";
+import Footer from "./components/footer";
+
+export default function RecordingScreen() {
+  const [isRecording, setIsRecording] = useState(false);
+  const recordingRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const streamRef = useRef(null);
+  const soundRef = useRef(null);
+  const webAudioRef = useRef(null);
+
+  const [recordings, setRecordings] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [playingId, setPlayingId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editedName, setEditedName] = useState("");
+
+  // 🔹 Start recording
+  const startRecording = async () => {
+    try {
+      if (Platform.OS === "web") {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamRef.current = stream;
+        chunksRef.current = [];
+
+        const mr = new MediaRecorder(stream);
+        mediaRecorderRef.current = mr;
+
+        mr.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+        };
+        mr.start();
+        setIsRecording(true);
+      } else {
+        const { granted } = await Audio.requestPermissionsAsync();
+        if (!granted) return alert("Microphone permission required!");
+        await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+
+        const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+        recordingRef.current = recording;
+        setIsRecording(true);
+      }
+    } catch (err) {
+      console.error("startRecording error:", err);
+      alert("Cannot start recording: " + err.message);
+    }
+  };
+
+  // 🔹 Stop recording
+  const stopRecording = async () => {
+    setSaving(true);
+    try {
+      let url;
+      let name = `Recording ${new Date().toLocaleString()}`;
+
+      if (Platform.OS === "web") {
+        if (!mediaRecorderRef.current) return;
+        const mr = mediaRecorderRef.current;
+
+        await new Promise(resolve => {
+          mr.onstop = resolve;
+          mr.stop();
+        });
+
+        if (!chunksRef.current.length) return alert("No audio recorded!");
+
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        url = URL.createObjectURL(blob);
+
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(t => t.stop());
+          streamRef.current = null;
+        }
+
+        mediaRecorderRef.current = null;
+        chunksRef.current = [];
+      } else {
+        if (!recordingRef.current) return;
+        const rec = recordingRef.current;
+
+        await rec.stopAndUnloadAsync();
+        const uri = rec.getURI();
+        recordingRef.current = null;
+
+        url = uri;
+      }
+
+      const newRecording = { id: Date.now().toString(), name, url };
+      setRecordings(prev => [newRecording, ...prev]);
+      setIsRecording(false);
+    } catch (err) {
+      console.error("stopRecording error:", err);
+      alert("Could not save recording: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // 🔹 Play recording
+  const playRecording = async (item) => {
+    try {
+      if (Platform.OS === "web") {
+        if (webAudioRef.current) {
+          webAudioRef.current.pause();
+          webAudioRef.current = null;
+        }
+        const audio = new Audio(item.url);
+        webAudioRef.current = audio;
+        setPlayingId(item.id);
+        audio.onended = () => setPlayingId(null);
+        audio.play();
+      } else {
+        if (soundRef.current) {
+          await soundRef.current.unloadAsync();
+          soundRef.current = null;
+        }
+        const { sound } = await Audio.Sound.createAsync({ uri: item.url }, { shouldPlay: true });
+        soundRef.current = sound;
+        setPlayingId(item.id);
+
+        sound.setOnPlaybackStatusUpdate(status => {
+          if (status.didJustFinish) {
+            sound.unloadAsync().catch(()=>{});
+            soundRef.current = null;
+            setPlayingId(null);
+          }
+        });
+      }
+    } catch (err) {
+      console.error("playRecording error:", err);
+      setPlayingId(null);
+    }
+  };
+
+  // 🔹 Delete recording
+  const deleteRecording = (item) => {
+    setRecordings(prev => prev.filter(r => r.id !== item.id));
+  };
+
+  // 🔹 Rename recording
+  const updateRecordingName = (id) => {
+    setRecordings(prev => prev.map(r => (r.id === id ? { ...r, name: editedName } : r)));
+    setEditingId(null);
+    setEditedName("");
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* 🔹 Header */}
+      <Header />
+
+      <Text style={styles.title}>🎙️ Class Recordings</Text>
+
+      <TouchableOpacity
+        style={[styles.recordButton, { backgroundColor: isRecording ? "#fdecec" : "#e6dbfa" }]}
+        onPress={isRecording ? stopRecording : startRecording}
+        disabled={saving}
+      >
+        <Ionicons name={isRecording ? "stop-circle" : "mic-circle"} size={80} color={isRecording ? "#ff4d6d" : "#8a4af3"} />
+        <Text style={styles.buttonText}>{isRecording ? "Stop Recording" : "Start Recording"}</Text>
+      </TouchableOpacity>
+
+      {saving && (
+        <View style={styles.savingBox}>
+          <ActivityIndicator size="small" color="#8a4af3" />
+          <Text style={{ color: "#555" }}>Processing recording...</Text>
+        </View>
+      )}
+
+      <FlatList
+        data={recordings}
+        keyExtractor={item => item.id}
+        ListEmptyComponent={<Text style={styles.emptyText}>No recordings yet.</Text>}
+        renderItem={({ item }) => (
+          <View style={styles.recordingCard}>
+            {editingId === item.id ? (
+              <>
+                <TextInput style={styles.input} value={editedName} onChangeText={setEditedName} placeholder="Edit name..." />
+                <TouchableOpacity onPress={() => updateRecordingName(item.id)}>
+                  <Ionicons name="checkmark-outline" size={24} color="green" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setEditingId(null)}>
+                  <Ionicons name="close-outline" size={24} color="red" />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.name}>{item.name}</Text>
+                </View>
+                <View style={styles.actions}>
+                  <TouchableOpacity onPress={() => playRecording(item)}>
+                    <Ionicons name={playingId === item.id ? "pause-circle" : "play-circle"} size={28} color="#8a4af3" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => { setEditingId(item.id); setEditedName(item.name); }}>
+                    <Ionicons name="pencil-outline" size={22} color="#000" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteRecording(item)}>
+                    <Ionicons name="trash-outline" size={22} color="red" />
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        )}
+      />
+
+      {/* 🔹 Footer */}
+      <Footer />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: "#fdfcff" },
+  title: { fontSize: 26, fontWeight: "700", color: "#3b0068", textAlign: "center", marginBottom: 20 },
+  recordButton: { alignItems: "center", justifyContent: "center", borderRadius: 20, paddingVertical: 20, marginBottom: 25 },
+  buttonText: { marginTop: 10, fontSize: 16, fontWeight: "600", color: "#333" },
+  savingBox: { alignItems: "center", marginBottom: 12 },
+  recordingCard: { flexDirection: "row", alignItems: "center", backgroundColor: "#f4d9f8", borderRadius: 16, padding: 14, marginBottom: 10 },
+  input: { flex: 1, backgroundColor: "#fff", borderRadius: 12, padding: 8, borderWidth: 1, borderColor: "#ddd", marginRight: 10 },
+  name: { fontSize: 15, fontWeight: "600", color: "#333" },
+  actions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  emptyText: { textAlign: "center", color: "#999", marginTop: 20 },
+});
