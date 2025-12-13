@@ -1,12 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Footer from "./components/footer";
 import Header from "./components/header";
 
+import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { collection, addDoc, onSnapshot, serverTimestamp, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { useAuth } from "./context/AuthContext";
 
 const Index = () => {
@@ -129,7 +128,7 @@ const Index = () => {
                     <TouchableOpacity onPress={() => setEditingBookId(item.id)}>
                       <Ionicons name="pencil-outline" size={22} color="black" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => deleteBookFirestore(item.id)}>
+                    <TouchableOpacity testID="delete-button" onPress={() => deleteBookFirestore(item.id)}>
                       <Ionicons name="trash-outline" size={22} color="red" />
                     </TouchableOpacity>
                   </View>
