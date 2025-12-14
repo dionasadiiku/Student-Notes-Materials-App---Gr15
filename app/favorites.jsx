@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { collection, deleteDoc, doc, onSnapshot } from "firebase/firestore";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from "../firebase";
 import FavoriteModal from "./components/FavoriteModal";
@@ -27,18 +27,19 @@ export default function Favorites() {
     return unsubscribe;
   }, []);
 
-  const removeFavorite = async (bookId) => {
-    if (!auth.currentUser) return;
+const removeFavorite = useCallback(async (bookId) => {
+  if (!auth.currentUser) return;
 
-    const favRef = doc(db, "users", auth.currentUser.uid, "favorites", bookId);
-    try {
-      await deleteDoc(favRef);
-    } catch (error) {
-      console.log("Error removing favorite:", error);
-    }
-  };
+  const favRef = doc(db, "users", auth.currentUser.uid, "favorites", bookId);
+  try {
+    await deleteDoc(favRef);
+  } catch (error) {
+    console.log("Error removing favorite:", error);
+  }
+}, []);
 
-  const renderBook = ({ item }) => (
+
+    const renderBook = useCallback(({ item }) => (
     <TouchableOpacity
       style={styles.bookCard}
       onPress={() => setSelectedBook(item)}
@@ -55,7 +56,7 @@ export default function Favorites() {
       <Text style={styles.bookTitle}>{item.title}</Text>
       <Text style={styles.bookAuthor}>{item.author}</Text>
     </TouchableOpacity>
-  );
+  ), [removeFavorite]);
 
   return (
     <View style={styles.container}>
