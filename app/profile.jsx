@@ -1,20 +1,21 @@
-import React, { useState } from "react";
+import { useState } from "react";
+
+import { Ionicons } from "@expo/vector-icons";
+import { updateProfile } from "firebase/auth";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  Modal,
-  TextInput,
   ActivityIndicator,
+  Image,
+  Modal,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { auth } from "../firebase";
-import { updateProfile } from "firebase/auth";
-import Header from "./components/header";
 import Footer from "./components/footer";
-import { Ionicons } from "@expo/vector-icons";
+import Header from "./components/header";
 
 export default function Profile() {
   const user = auth.currentUser;
@@ -66,6 +67,27 @@ export default function Profile() {
   const joinedText = user?.metadata?.creationTime
     ? new Date(user.metadata.creationTime).toLocaleString()
     : "—";
+
+  const pickImage = async () => {
+  // kërko leje për galeri
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setError("Permission to access gallery is required.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setPhotoInput(result.assets[0].uri);
+    }
+  };
+
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -126,14 +148,30 @@ export default function Profile() {
             />
 
             <Text style={[styles.inputLabel, { marginTop: 10 }]}>Photo URL</Text>
-            <TextInput
-              value={photoInput}
-              onChangeText={setPhotoInput}
-              placeholder="https://example.com/me.jpg"
-              style={styles.input}
-              autoCapitalize="none"
-              keyboardType="url"
-            />
+            <Text style={[styles.inputLabel, { marginTop: 10 }]}>Profile photo</Text>
+
+            <View style={{ alignItems: "center", marginBottom: 10 }}>
+               <Image source={{
+                 uri:
+                 photoInput ||
+                 "https://cdn-icons-png.flaticon.com/512/847/847969.png",
+               }}
+               style={{ width: 100, height: 100, borderRadius: 50 }} />
+
+                <TouchableOpacity
+                 style={{
+                 marginTop: 8,
+                 backgroundColor: "#eab8dc",
+                 paddingHorizontal: 14,
+                 paddingVertical: 8,
+                 borderRadius: 20,
+                 }}
+                 onPress={pickImage}
+                >
+                <Text style={{ color: "#fff" }}>Choose from gallery</Text>
+                </TouchableOpacity>
+             </View>
+
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
             {success ? <Text style={styles.success}>{success}</Text> : null}
