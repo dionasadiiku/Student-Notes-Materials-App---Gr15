@@ -1,7 +1,7 @@
-import { useState } from "react";
-
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { updateProfile } from "firebase/auth";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -16,6 +16,7 @@ import {
 import { auth } from "../firebase";
 import Footer from "./components/footer";
 import Header from "./components/header";
+
 
 export default function Profile() {
   const user = auth.currentUser;
