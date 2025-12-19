@@ -27,6 +27,13 @@ import { auth, db } from "../firebase";
 import Footer from "./components/footer";
 import Header from "./components/header";
 
+import {
+  registerForNotifications,
+  sendLocalNotification,
+  saveNotificationToFirestore,
+} from "../notifications";
+
+
 export default function RecordingScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const recordingRef = useRef(null);
@@ -41,6 +48,10 @@ export default function RecordingScreen() {
   const [playingId, setPlayingId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editedName, setEditedName] = useState("");
+
+  useEffect(() => {
+    registerForNotifications();
+  }, []);
 
   useEffect(() => {
     const loadRecordings = async () => {
@@ -155,6 +166,18 @@ export default function RecordingScreen() {
       const docRef = await addDoc(collection(db, "recordings"), newRecording);
       setRecordings(prev => [{ ...newRecording, docId: docRef.id }, ...prev]);
 
+
+      const message = `${name} (${Math.round(duration)}s)`;
+
+      await sendLocalNotification("Recording saved", message);
+
+      await saveNotificationToFirestore({
+        type: "recording",
+        title: "Recording saved",
+        message,
+        recordingId: docRef.id,
+      });
+
       setIsRecording(false);
     } catch (err) {
       console.error("stopRecording error:", err);
@@ -226,11 +249,20 @@ export default function RecordingScreen() {
 
       await deleteDoc(doc(db, "recordings", item.docId));
       setRecordings(prev => prev.filter(r => r.docId !== item.docId));
+
+      /* 🔔 SHTESË: notification për fshirje */
+      await sendLocalNotification("Recording deleted", item.name);
+
+      await saveNotificationToFirestore({
+        type: "recording",
+        title: "Recording deleted",
+        message: item.name,
+        recordingId: item.docId,
+      });
     } catch (err) {
       console.error("deleteRecording error:", err);
     }
   };
-
   const updateRecordingName = async (item) => {
     const newName = editedName.trim();
     if (!newName) return;
