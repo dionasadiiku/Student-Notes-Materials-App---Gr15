@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react-native";
-import MapScreen from "./MapScreen";
+import MapScreen from "../app/MapScreen";
 
 // Mock expo-router
 jest.mock("expo-router", () => ({

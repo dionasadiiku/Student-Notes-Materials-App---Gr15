@@ -1,0 +1,789 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Index Component renders without crashing 1`] = `
+<View
+  style={
+    {
+      "backgroundColor": "#fdfcff",
+      "flex": 1,
+    }
+  }
+>
+  <Header />
+  <View
+    collapsable={false}
+    style={
+      {
+        "flex": 1,
+        "opacity": 0,
+        "transform": [
+          {
+            "translateY": 12,
+          },
+        ],
+      }
+    }
+  >
+    <RCTScrollView
+      contentContainerStyle={
+        {
+          "padding": 20,
+        }
+      }
+    >
+      <View>
+        <View
+          style={
+            {
+              "flexDirection": "row",
+              "justifyContent": "space-between",
+              "marginBottom": 20,
+            }
+          }
+        >
+          <View
+            collapsable={false}
+            style={
+              {
+                "flex": 1,
+                "transform": [
+                  {
+                    "scale": 1,
+                  },
+                ],
+              }
+            }
+          >
+            <View
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onClick={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#e6dbfa",
+                  "borderRadius": 16,
+                  "flex": 1,
+                  "marginHorizontal": 5,
+                  "opacity": 1,
+                  "padding": 15,
+                }
+              }
+            >
+              <Text />
+              <Text
+                style={
+                  {
+                    "fontWeight": "600",
+                    "marginTop": 10,
+                  }
+                }
+              >
+                Class recording
+              </Text>
+            </View>
+          </View>
+          <View
+            collapsable={false}
+            style={
+              {
+                "flex": 1,
+                "transform": [
+                  {
+                    "scale": 1,
+                  },
+                ],
+              }
+            }
+          >
+            <View
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onClick={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#f4d9f8",
+                  "borderRadius": 16,
+                  "flex": 1,
+                  "marginHorizontal": 5,
+                  "opacity": 1,
+                  "padding": 15,
+                }
+              }
+            >
+              <Text />
+              <Text
+                style={
+                  {
+                    "fontWeight": "600",
+                    "marginTop": 10,
+                  }
+                }
+              >
+                Scan Text
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View
+          collapsable={false}
+          style={
+            {
+              "transform": [
+                {
+                  "scale": 1,
+                },
+              ],
+            }
+          }
+        >
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "alignItems": "center",
+                "backgroundColor": "#d9f4ec",
+                "borderRadius": 16,
+                "flex": 1,
+                "marginHorizontal": 5,
+                "opacity": 1,
+                "padding": 10,
+              }
+            }
+          >
+            <Text />
+            <Text
+              style={
+                {
+                  "fontWeight": "600",
+                  "marginTop": 10,
+                }
+              }
+            >
+              My Location
+            </Text>
+          </View>
+        </View>
+        <View
+          style={
+            {
+              "marginBottom": 25,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "fontSize": 20,
+                "fontWeight": "bold",
+                "marginBottom": 4,
+              }
+            }
+          >
+            
+
+            My Studylists
+          </Text>
+          <Text
+            style={
+              {
+                "color": "#777",
+                "fontSize": 14,
+                "marginBottom": 16,
+              }
+            }
+          >
+            Tap to learn more
+          </Text>
+          <View
+            collapsable={false}
+            style={
+              {
+                "transform": [
+                  {
+                    "scale": 1,
+                  },
+                ],
+              }
+            }
+          >
+            <View
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onClick={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#f4f4f4",
+                  "borderRadius": 16,
+                  "flexDirection": "row",
+                  "opacity": 1,
+                  "padding": 16,
+                }
+              }
+            >
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "backgroundColor": "#eab8dc",
+                    "borderRadius": 12,
+                    "height": 40,
+                    "justifyContent": "center",
+                    "marginRight": 10,
+                    "width": 40,
+                  }
+                }
+              >
+                <Text />
+              </View>
+              <View>
+                <Text
+                  style={
+                    {
+                      "fontSize": 16,
+                      "fontWeight": "600",
+                    }
+                  }
+                >
+                  My favorites
+                </Text>
+                <Text
+                  style={
+                    {
+                      "color": "#555",
+                      "fontSize": 13,
+                    }
+                  }
+                >
+                  0
+                   saved books
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+        <View
+          style={
+            {
+              "marginTop": 20,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "fontSize": 20,
+                "fontWeight": "bold",
+                "marginBottom": 4,
+              }
+            }
+          >
+            Continue reading
+          </Text>
+          <Text
+            style={
+              {
+                "color": "#777",
+                "fontSize": 14,
+                "marginBottom": 16,
+              }
+            }
+          >
+            Login or Register to continue where you left off
+          </Text>
+          <RCTScrollView
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            style={
+              {
+                "marginTop": 15,
+              }
+            }
+          >
+            <View>
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "backgroundColor": "#f9f3ff",
+                    "borderRadius": 14,
+                    "marginRight": 16,
+                    "padding": 12,
+                    "width": 130,
+                  }
+                }
+              >
+                <View
+                  accessibilityState={
+                    {
+                      "busy": undefined,
+                      "checked": undefined,
+                      "disabled": undefined,
+                      "expanded": undefined,
+                      "selected": undefined,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": undefined,
+                      "min": undefined,
+                      "now": undefined,
+                      "text": undefined,
+                    }
+                  }
+                  accessible={true}
+                  collapsable={false}
+                  focusable={true}
+                  onClick={[Function]}
+                  onResponderGrant={[Function]}
+                  onResponderMove={[Function]}
+                  onResponderRelease={[Function]}
+                  onResponderTerminate={[Function]}
+                  onResponderTerminationRequest={[Function]}
+                  onStartShouldSetResponder={[Function]}
+                  style={
+                    {
+                      "alignSelf": "flex-end",
+                      "marginBottom": 4,
+                      "opacity": 1,
+                    }
+                  }
+                  testID="favorite-heart"
+                >
+                  <Text />
+                </View>
+                <View
+                  accessibilityState={
+                    {
+                      "busy": undefined,
+                      "checked": undefined,
+                      "disabled": undefined,
+                      "expanded": undefined,
+                      "selected": undefined,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": undefined,
+                      "min": undefined,
+                      "now": undefined,
+                      "text": undefined,
+                    }
+                  }
+                  accessible={true}
+                  collapsable={false}
+                  focusable={true}
+                  onClick={[Function]}
+                  onResponderGrant={[Function]}
+                  onResponderMove={[Function]}
+                  onResponderRelease={[Function]}
+                  onResponderTerminate={[Function]}
+                  onResponderTerminationRequest={[Function]}
+                  onStartShouldSetResponder={[Function]}
+                  style={
+                    {
+                      "opacity": 1,
+                    }
+                  }
+                >
+                  <Image
+                    source={
+                      {
+                        "uri": "https://covers.openlibrary.org/b/id/7222246-L.jpg",
+                      }
+                    }
+                    style={
+                      {
+                        "borderRadius": 10,
+                        "height": 125,
+                        "marginBottom": 10,
+                        "width": 85,
+                      }
+                    }
+                  />
+                </View>
+                <Text
+                  numberOfLines={2}
+                  style={
+                    {
+                      "fontSize": 13,
+                      "fontWeight": "600",
+                      "textAlign": "center",
+                    }
+                  }
+                >
+                  The Great Gatsby
+                </Text>
+                <Text
+                  style={
+                    {
+                      "color": "#777",
+                      "fontSize": 11,
+                      "textAlign": "center",
+                    }
+                  }
+                >
+                  F. Scott Fitzgerald
+                </Text>
+              </View>
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "backgroundColor": "#f9f3ff",
+                    "borderRadius": 14,
+                    "marginRight": 16,
+                    "padding": 12,
+                    "width": 130,
+                  }
+                }
+              >
+                <View
+                  accessibilityState={
+                    {
+                      "busy": undefined,
+                      "checked": undefined,
+                      "disabled": undefined,
+                      "expanded": undefined,
+                      "selected": undefined,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": undefined,
+                      "min": undefined,
+                      "now": undefined,
+                      "text": undefined,
+                    }
+                  }
+                  accessible={true}
+                  collapsable={false}
+                  focusable={true}
+                  onClick={[Function]}
+                  onResponderGrant={[Function]}
+                  onResponderMove={[Function]}
+                  onResponderRelease={[Function]}
+                  onResponderTerminate={[Function]}
+                  onResponderTerminationRequest={[Function]}
+                  onStartShouldSetResponder={[Function]}
+                  style={
+                    {
+                      "alignSelf": "flex-end",
+                      "marginBottom": 4,
+                      "opacity": 1,
+                    }
+                  }
+                  testID="favorite-heart"
+                >
+                  <Text />
+                </View>
+                <View
+                  accessibilityState={
+                    {
+                      "busy": undefined,
+                      "checked": undefined,
+                      "disabled": undefined,
+                      "expanded": undefined,
+                      "selected": undefined,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": undefined,
+                      "min": undefined,
+                      "now": undefined,
+                      "text": undefined,
+                    }
+                  }
+                  accessible={true}
+                  collapsable={false}
+                  focusable={true}
+                  onClick={[Function]}
+                  onResponderGrant={[Function]}
+                  onResponderMove={[Function]}
+                  onResponderRelease={[Function]}
+                  onResponderTerminate={[Function]}
+                  onResponderTerminationRequest={[Function]}
+                  onStartShouldSetResponder={[Function]}
+                  style={
+                    {
+                      "opacity": 1,
+                    }
+                  }
+                >
+                  <Image
+                    source={
+                      {
+                        "uri": "https://covers.openlibrary.org/b/id/7884861-L.jpg",
+                      }
+                    }
+                    style={
+                      {
+                        "borderRadius": 10,
+                        "height": 125,
+                        "marginBottom": 10,
+                        "width": 85,
+                      }
+                    }
+                  />
+                </View>
+                <Text
+                  numberOfLines={2}
+                  style={
+                    {
+                      "fontSize": 13,
+                      "fontWeight": "600",
+                      "textAlign": "center",
+                    }
+                  }
+                >
+                  Brave New World
+                </Text>
+                <Text
+                  style={
+                    {
+                      "color": "#777",
+                      "fontSize": 11,
+                      "textAlign": "center",
+                    }
+                  }
+                >
+                  Aldous Huxley
+                </Text>
+              </View>
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "backgroundColor": "#f9f3ff",
+                    "borderRadius": 14,
+                    "marginRight": 16,
+                    "padding": 12,
+                    "width": 130,
+                  }
+                }
+              >
+                <View
+                  accessibilityState={
+                    {
+                      "busy": undefined,
+                      "checked": undefined,
+                      "disabled": undefined,
+                      "expanded": undefined,
+                      "selected": undefined,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": undefined,
+                      "min": undefined,
+                      "now": undefined,
+                      "text": undefined,
+                    }
+                  }
+                  accessible={true}
+                  collapsable={false}
+                  focusable={true}
+                  onClick={[Function]}
+                  onResponderGrant={[Function]}
+                  onResponderMove={[Function]}
+                  onResponderRelease={[Function]}
+                  onResponderTerminate={[Function]}
+                  onResponderTerminationRequest={[Function]}
+                  onStartShouldSetResponder={[Function]}
+                  style={
+                    {
+                      "alignSelf": "flex-end",
+                      "marginBottom": 4,
+                      "opacity": 1,
+                    }
+                  }
+                  testID="favorite-heart"
+                >
+                  <Text />
+                </View>
+                <View
+                  accessibilityState={
+                    {
+                      "busy": undefined,
+                      "checked": undefined,
+                      "disabled": undefined,
+                      "expanded": undefined,
+                      "selected": undefined,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": undefined,
+                      "min": undefined,
+                      "now": undefined,
+                      "text": undefined,
+                    }
+                  }
+                  accessible={true}
+                  collapsable={false}
+                  focusable={true}
+                  onClick={[Function]}
+                  onResponderGrant={[Function]}
+                  onResponderMove={[Function]}
+                  onResponderRelease={[Function]}
+                  onResponderTerminate={[Function]}
+                  onResponderTerminationRequest={[Function]}
+                  onStartShouldSetResponder={[Function]}
+                  style={
+                    {
+                      "opacity": 1,
+                    }
+                  }
+                >
+                  <Image
+                    source={
+                      {
+                        "uri": "https://covers.openlibrary.org/b/id/8235116-L.jpg",
+                      }
+                    }
+                    style={
+                      {
+                        "borderRadius": 10,
+                        "height": 125,
+                        "marginBottom": 10,
+                        "width": 85,
+                      }
+                    }
+                  />
+                </View>
+                <Text
+                  numberOfLines={2}
+                  style={
+                    {
+                      "fontSize": 13,
+                      "fontWeight": "600",
+                      "textAlign": "center",
+                    }
+                  }
+                >
+                  The Alchemist
+                </Text>
+                <Text
+                  style={
+                    {
+                      "color": "#777",
+                      "fontSize": 11,
+                      "textAlign": "center",
+                    }
+                  }
+                >
+                  Paulo Coelho
+                </Text>
+              </View>
+            </View>
+          </RCTScrollView>
+        </View>
+      </View>
+    </RCTScrollView>
+  </View>
+  <Footer
+    onHomePress={[Function]}
+  />
+</View>
+`;
