@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react"; // NEW
 import {
   FlatList,
   StyleSheet,
@@ -11,6 +11,7 @@ import {
   Image,
   Linking,
   ActivityIndicator,
+  Animated, // NEW
 } from "react-native";
 import Footer from "./components/footer";
 import Header from "./components/header";
@@ -21,6 +22,19 @@ const mockData = [
   { id: "3", title: "Chemistry Summary" },
   { id: "4", title: "Programming Basics" },
 ];
+
+// NEW – Memoized item for FlatList
+const ResultItem = React.memo(({ item }) => {
+  return (
+    <Animated.View 
+      style={{ opacity: 1 }}
+    >
+      <TouchableOpacity style={styles.resultItem} activeOpacity={0.6}>
+        <Text style={styles.resultText}>{item.title}</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+});
 
 export default function Search() {
   const router = useRouter();
@@ -33,8 +47,8 @@ export default function Search() {
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshSearch = () => setRefreshKey((p) => p + 1);
 
-  // Live search as user types: përdor handleSearch në onChangeText
-  const handleSearch = (text) => {
+  // NEW — useCallback për performancë
+  const handleSearch = useCallback((text) => {
     setQuery(text);
     if (text.trim() === "") {
       setFiltered([]);
@@ -44,14 +58,13 @@ export default function Search() {
       );
       setFiltered(results);
     }
-  };
+  }, []);
 
   const onSearchPress = () => {
-    // nëse preferon kërkim vetëm me buton, mund ta thërrasësh handleSearch(query) këtu
     handleSearch(query);
   };
 
-  // Fetch rekomandime nga Google Books API
+  // Fetch Recommended Books
   useEffect(() => {
     const fetchRecommendedBooks = async () => {
       setLoadingBooks(true);
@@ -63,9 +76,7 @@ export default function Search() {
         const data = await response.json();
         setRecommendedBooks(data.items || []);
       } catch (error) {
-        console.error("Error fetching recommended books:", error);
         setBooksError("Could not load recommended books");
-        setRecommendedBooks([]);
       } finally {
         setLoadingBooks(false);
       }
@@ -77,38 +88,48 @@ export default function Search() {
     if (!url) return;
     try {
       await Linking.openURL(url);
-    } catch (err) {
-      console.error("Failed to open link:", err);
-    }
+    } catch {}
   };
 
-  const renderRecommendedItem = ({ item }) => {
+  // NEW — Memoize recommended items
+  const renderRecommendedItem = useCallback(({ item }) => {
     const thumbnail = item.volumeInfo.imageLinks?.thumbnail
       ? item.volumeInfo.imageLinks.thumbnail.replace(/^http:\/\//i, "https://")
       : null;
+
     return (
       <TouchableOpacity
         style={styles.bookCard}
         onPress={() => openBookLink(item.volumeInfo.infoLink)}
+        activeOpacity={0.7} // fade effect
       >
         <View style={styles.bookImageWrap}>
           {thumbnail ? (
-            <Image source={{ uri: thumbnail }} style={styles.bookImage} />
+            <Image
+              source={{ uri: thumbnail }}
+              style={styles.bookImage}
+              loading="lazy"      // NEW lazy loading
+            />
           ) : (
             <View style={styles.bookImagePlaceholder}>
               <Text style={{ color: "#666", fontSize: 12 }}>No cover</Text>
             </View>
           )}
         </View>
+
         <Text numberOfLines={2} style={styles.bookTitle}>
           {item.volumeInfo.title}
         </Text>
+
         <Text numberOfLines={1} style={styles.bookAuthors}>
           {item.volumeInfo.authors?.join(", ") ?? "Unknown"}
         </Text>
       </TouchableOpacity>
     );
-  };
+  }, []);
+
+  // NEW — useMemo për filtered results (jo prej mockData)
+  const filteredResults = useMemo(() => filtered, [filtered]);
 
   return (
     <View style={styles.container}>
@@ -116,7 +137,11 @@ export default function Search() {
 
       <View style={styles.content}>
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+            activeOpacity={0.6} // fade
+          >
             <Ionicons name="arrow-back" size={26} color="#000" />
           </TouchableOpacity>
           <Text style={styles.screenTitle}>Search</Text>
@@ -130,33 +155,34 @@ export default function Search() {
               placeholder="Search notes, materials..."
               placeholderTextColor="#999"
               value={query}
-              onChangeText={handleSearch} // live search as you type
+              onChangeText={handleSearch}
             />
           </View>
-          <TouchableOpacity style={styles.searchButton} onPress={onSearchPress}>
+
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={onSearchPress}
+            activeOpacity={0.6} // fade
+          >
             <Text style={styles.searchButtonText}>Search</Text>
           </TouchableOpacity>
         </View>
 
-        {query !== "" && filtered.length === 0 ? (
+        {query !== "" && filteredResults.length === 0 ? (
           <Text style={styles.noResults}>No results found</Text>
         ) : (
           <FlatList
-            data={filtered}
+            data={filteredResults}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.resultItem}>
-                <Text style={styles.resultText}>{item.title}</Text>
-              </TouchableOpacity>
-            )}
+            renderItem={({ item }) => <ResultItem item={item} />}
             contentContainerStyle={{ paddingBottom: 20 }}
           />
         )}
 
-        {/* Recommended Books section */}
+        {/* Recommended Books */}
         <View style={{ marginTop: 10 }}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <Text style={{ fontSize: 18, fontWeight: "700" }}>Recommended Books</Text>
+          <View style={styles.booksHeader}>
+            <Text style={styles.booksTitle}>Recommended Books</Text>
             {loadingBooks && <ActivityIndicator size="small" />}
           </View>
 
@@ -183,11 +209,13 @@ export default function Search() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   content: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
+
   topBar: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
   backButton: { marginRight: 12, padding: 6 },
   screenTitle: { fontSize: 24, fontWeight: "700" },
 
   searchRow: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
+
   searchBar: {
     flex: 1,
     flexDirection: "row",
@@ -202,6 +230,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+
   input: { flex: 1, fontSize: 16, color: "#000" },
 
   searchButton: {
@@ -212,10 +241,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
     elevation: 2,
   },
   searchButtonText: { fontSize: 16, fontWeight: "600", color: "#000" },
@@ -225,21 +250,33 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
     elevation: 2,
   },
   resultText: { fontSize: 16, fontWeight: "500", color: "#1C1C1E" },
 
   noResults: { textAlign: "center", marginTop: 30, fontSize: 16, color: "#999" },
 
+  booksHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  booksTitle: { fontSize: 18, fontWeight: "700" },
 
   bookCard: { marginRight: 12, width: 140 },
-  bookImageWrap: { width: "100%", height: 180, borderRadius: 8, overflow: "hidden", backgroundColor: "#f0eef6" },
-  bookImage: { width: "100%", height: "100%", resizeMode: "cover" },
-  bookImagePlaceholder: { flex: 1, justifyContent: "center", alignItems: "center" },
+  bookImageWrap: {
+    width: "100%",
+    height: 180,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: "#f0eef6",
+  },
+  bookImage: { width: "100%", height: "100%" },
+  bookImagePlaceholder: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   bookTitle: { marginTop: 8, fontWeight: "500", fontSize: 14 },
   bookAuthors: { fontSize: 12, color: "#555" },
 });
