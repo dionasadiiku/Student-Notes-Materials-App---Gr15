@@ -1,25 +1,15 @@
 import { render } from "@testing-library/react-native";
 import FavoriteModal from "../app/components/FavoriteModal";
 
-// 🔴 MOCK Modal (CRITICAL)
-jest.mock("react-native/Libraries/Modal/Modal", () => {
-  return ({ children }) => children;
-});
-
-// 🔴 MOCK FIRESTORE (FULL)
+// 🔴 MOCK FIRESTORE (KY ËSHTË ÇELËSI)
 jest.mock("firebase/firestore", () => ({
   doc: jest.fn(),
   updateDoc: jest.fn(),
-  arrayUnion: jest.fn(),
 }));
 
-// 🔴 MOCK firebase config (auth MUST have currentUser)
+// 🔴 MOCK firebase config
 jest.mock("../firebase", () => ({
-  auth: {
-    currentUser: {
-      uid: "test-user-id",
-    },
-  },
+  auth: {},
   db: {},
 }));
 
