@@ -27,10 +27,14 @@ import {
   onSnapshot,
   serverTimestamp,
   updateDoc,
+  setDoc, // ✅ SHTOJE
 } from "firebase/firestore";
 
 import { db } from "../firebase";
 import { useAuth } from "./context/AuthContext";
+
+// ✅ përdore notifications.js
+import { registerPushNotifications } from "../notifications";
 
 export default function Reminder() {
   const { user } = useAuth();
@@ -42,13 +46,12 @@ export default function Reminder() {
   const [editingReminder, setEditingReminder] = useState(null);
   const [tempDate, setTempDate] = useState(new Date());
 
-  // Modal për shikim foto
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [selectedPhotoUri, setSelectedPhotoUri] = useState(null);
 
-  // LOAD reminders
+  // ✅ LOAD reminders
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid) return;
 
     const ref = collection(db, "users", user.uid, "reminders");
 
@@ -61,34 +64,55 @@ export default function Reminder() {
     });
 
     return unsubscribe;
-  }, [user]);
+  }, [user?.uid]);
 
-  // NOTIFICATIONS — MOBILE ONLY
+  // ✅ si te Recording: vetëm permissions + channel
   useEffect(() => {
-    if (Platform.OS !== "web") {
-      Notifications.requestPermissionsAsync();
-    }
+    registerPushNotifications();
   }, []);
 
+  // ✅ schedule notif në kohën e zgjedhur + kthe ID
   const scheduleNotification = async (title, date) => {
-    if (Platform.OS === "web") return; // ❗ SAFE ON WEB
+    if (Platform.OS === "web") return null;
 
     try {
-      await Notifications.scheduleNotificationAsync({
+      const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: "Reminder",
           body: title || "You have a reminder.",
+          sound: true,
         },
-        trigger: date,
+        trigger: date, // ✅ vjen në kohën e zgjedhur
       });
+
+      return notificationId;
     } catch (err) {
       console.log("Notification Error:", err);
+      return null;
     }
   };
 
-  // Add TEXT reminder → Open Modal
+  // ✅ ruaje notif në users/{uid}/notifications (si Recording)
+  const saveNotificationToSubcollection = async (data) => {
+    if (!user?.uid) return;
+
+    // ensure user doc exists
+    await setDoc(
+      doc(db, "users", user.uid),
+      { createdAt: serverTimestamp() },
+      { merge: true }
+    );
+
+    await addDoc(collection(db, "users", user.uid, "notifications"), {
+      ...data,
+      createdAt: serverTimestamp(),
+      read: false,
+    });
+  };
+
+  // ✅ Add TEXT reminder → Open Modal
   const addReminder = () => {
-    if (!newReminder.trim() || !user) return;
+    if (!newReminder.trim() || !user?.uid) return;
 
     const now = new Date();
     setEditingReminder({
@@ -97,14 +121,16 @@ export default function Reminder() {
       text: newReminder,
       uri: null,
       remindAt: new Date(now.getTime() + 5 * 60 * 1000),
+      notificationId: null, // ✅
     });
+
     setTempDate(new Date(now.getTime() + 5 * 60 * 1000));
     setShowModal(true);
   };
 
-  // CAMERA → Open modal with photo
+  // ✅ CAMERA → Open modal with photo
   const openCamera = async () => {
-    if (!user) return;
+    if (!user?.uid) return;
 
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
@@ -112,9 +138,7 @@ export default function Reminder() {
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 1,
-    });
+    const result = await ImagePicker.launchCameraAsync({ quality: 1 });
 
     if (!result.canceled) {
       const now = new Date();
@@ -125,6 +149,7 @@ export default function Reminder() {
         text: "",
         uri: result.assets[0].uri,
         remindAt: new Date(now.getTime() + 5 * 60 * 1000),
+        notificationId: null, // ✅
       });
 
       setTempDate(new Date(now.getTime() + 5 * 60 * 1000));
@@ -132,16 +157,38 @@ export default function Reminder() {
     }
   };
 
+  // ✅ DELETE (UI jote le të mbetet deleteReminder(item.id))
   const deleteReminder = async (id) => {
-    if (!user) return;
-    await deleteDoc(doc(db, "users", user.uid, "reminders", id));
+    if (!user?.uid) return;
+
+    try {
+      // gjeje reminder-in që me pas notificationId
+      const item = reminders.find((r) => r.id === id);
+
+      // cancel scheduled notification
+      if (item?.notificationId && Platform.OS !== "web") {
+        await Notifications.cancelScheduledNotificationAsync(item.notificationId);
+      }
+
+      await deleteDoc(doc(db, "users", user.uid, "reminders", id));
+
+      // (opsionale) ruaje edhe log për delete
+      await saveNotificationToSubcollection({
+        type: "reminder",
+        title: "Reminder deleted",
+        message: item?.text || "Reminder",
+        reminderId: id,
+        notificationId: item?.notificationId || null,
+        scheduledAt: item?.remindAt || new Date(),
+      });
+    } catch (e) {
+      console.log("deleteReminder error:", e);
+    }
   };
 
   const startEditReminder = (item) => {
     const remindAt =
-      item.remindAt && item.remindAt.toDate
-        ? item.remindAt.toDate()
-        : new Date();
+      item.remindAt && item.remindAt.toDate ? item.remindAt.toDate() : new Date();
 
     setEditingReminder({
       id: item.id,
@@ -149,38 +196,80 @@ export default function Reminder() {
       text: item.text || "",
       uri: item.uri || null,
       remindAt,
+      notificationId: item.notificationId || null, // ✅ RUJE
     });
+
     setTempDate(remindAt);
     setShowModal(true);
   };
 
   const saveReminderFromModal = async () => {
-    if (!user || !editingReminder) return;
+    if (!user?.uid || !editingReminder) return;
 
-    const data = {
-      type: editingReminder.type,
-      text: editingReminder.text,
-      uri: editingReminder.uri || null,
-      remindAt: tempDate,
-    };
+    try {
+      // ✅ nëse po editon dhe ka pas notif të vjetër → anuloje
+      if (editingReminder.notificationId && Platform.OS !== "web") {
+        await Notifications.cancelScheduledNotificationAsync(
+          editingReminder.notificationId
+        );
+      }
 
-    if (!editingReminder.id) {
-      await addDoc(collection(db, "users", user.uid, "reminders"), {
-        ...data,
-        createdAt: serverTimestamp(),
-      });
-      await scheduleNotification(editingReminder.text, tempDate);
-    } else {
-      await updateDoc(
-        doc(db, "users", user.uid, "reminders", editingReminder.id),
-        data
+      // ✅ schedule notif i ri + merre ID
+      const newNotificationId = await scheduleNotification(
+        editingReminder.text,
+        tempDate
       );
-      await scheduleNotification(editingReminder.text, tempDate);
-    }
 
-    setNewReminder("");
-    setEditingReminder(null);
-    setShowModal(false);
+      const data = {
+        type: editingReminder.type,
+        text: editingReminder.text,
+        uri: editingReminder.uri || null,
+        remindAt: tempDate,
+        notificationId: newNotificationId || null, // ✅ ruaje te reminder
+      };
+
+      if (!editingReminder.id) {
+        // ✅ CREATE
+        const docRef = await addDoc(
+          collection(db, "users", user.uid, "reminders"),
+          {
+            ...data,
+            createdAt: serverTimestamp(),
+          }
+        );
+
+        // ✅ save notif log
+        await saveNotificationToSubcollection({
+          type: "reminder",
+          title: "Reminder scheduled",
+          message: editingReminder.text || "Reminder",
+          reminderId: docRef.id,
+          notificationId: newNotificationId || null,
+          scheduledAt: tempDate,
+        });
+      } else {
+        // ✅ UPDATE
+        await updateDoc(
+          doc(db, "users", user.uid, "reminders", editingReminder.id),
+          data
+        );
+
+        await saveNotificationToSubcollection({
+          type: "reminder",
+          title: "Reminder updated",
+          message: editingReminder.text || "Reminder",
+          reminderId: editingReminder.id,
+          notificationId: newNotificationId || null,
+          scheduledAt: tempDate,
+        });
+      }
+
+      setNewReminder("");
+      setEditingReminder(null);
+      setShowModal(false);
+    } catch (e) {
+      console.log("saveReminderFromModal error:", e);
+    }
   };
 
   const changePhotoInModal = async () => {
@@ -188,9 +277,7 @@ export default function Reminder() {
 
     if (!result.canceled) {
       setEditingReminder((prev) =>
-        prev
-          ? { ...prev, uri: result.assets[0].uri, type: "photo" }
-          : prev
+        prev ? { ...prev, uri: result.assets[0].uri, type: "photo" } : prev
       );
     }
   };
@@ -205,7 +292,10 @@ export default function Reminder() {
     return date?.toLocaleString();
   };
 
-  return (
+
+
+
+   return (
     <View style={styles.container}>
       <Header />
 
