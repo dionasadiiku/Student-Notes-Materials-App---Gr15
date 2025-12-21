@@ -27,6 +27,25 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
 
+    /* ✅ SCREEN ENTER ANIMATION (fade + slide) */
+  const screenOpacity = useRef(new Animated.Value(0)).current;
+  const screenY = useRef(new Animated.Value(12)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(screenOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(screenY, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   /* 🔔 Toast animation */
   const toastOpacity = useRef(new Animated.Value(0)).current;
   const toastScale = useRef(new Animated.Value(0.9)).current;
@@ -58,6 +77,18 @@ export default function App() {
       }).start(() => setShowToast(false));
     }, 1800);
   };
+
+
+    /* ✅ PRESS ANIMATIONS (scale për secilin card) */
+  const scaleCard1 = useRef(new Animated.Value(1)).current; // Class recording
+  const scaleCard2 = useRef(new Animated.Value(1)).current; // Scan Text
+  const scaleCard3 = useRef(new Animated.Value(1)).current; // My Location
+  const scaleCard4 = useRef(new Animated.Value(1)).current; // My favorites
+
+  const pressIn = (scaleRef) =>
+  Animated.spring(scaleRef, { toValue: 0.97, useNativeDriver: true }).start();
+  const pressOut = (scaleRef) =>
+  Animated.spring(scaleRef, { toValue: 1, useNativeDriver: true }).start();
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (user) => {
@@ -148,9 +179,10 @@ export default function App() {
     return aFav === bFav ? 0 : aFav ? -1 : 1;
   });
 
-  return (
+   return (
     <View style={styles.container}>
       <Header />
+
       {/* ❤️ FAVORITE TOAST */}
       {showToast && (
         <Animated.View
@@ -164,96 +196,135 @@ export default function App() {
         </Animated.View>
       )}
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      {/* ✅ Screen animation wrapper */}
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: screenOpacity,
+          transform: [{ translateY: screenY }],
+        }}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.topCards}>
+            {/* ✅ Card 1 */}
+            <Animated.View style={{ flex: 1, transform: [{ scale: scaleCard1 }] }}>
+              <TouchableOpacity
+                style={[styles.card, { backgroundColor: "#e6dbfa" }]}
+                onPress={() => router.push("/recording")}
+                onPressIn={() => pressIn(scaleCard1)}
+                onPressOut={() => pressOut(scaleCard1)}
+                activeOpacity={0.9}
+              >
+                <MaterialCommunityIcons name="presentation-play" size={32} />
+                <Text style={styles.cardText}>Class recording</Text>
+              </TouchableOpacity>
+            </Animated.View>
 
-        <View style={styles.topCards}>
-          <TouchableOpacity
-            style={[styles.card, { backgroundColor: "#e6dbfa" }]}
-            onPress={() => router.push("/recording")}
-          >
-            <MaterialCommunityIcons name="presentation-play" size={32} />
-            <Text style={styles.cardText}>Class recording</Text>
-          </TouchableOpacity>
+            {/* ✅ Card 2 */}
+            <Animated.View style={{ flex: 1, transform: [{ scale: scaleCard2 }] }}>
+              <TouchableOpacity
+                style={[styles.card, { backgroundColor: "#f4d9f8" }]}
+                onPress={openCamera}
+                onPressIn={() => pressIn(scaleCard2)}
+                onPressOut={() => pressOut(scaleCard2)}
+                activeOpacity={0.9}
+              >
+                <Ionicons name="camera-outline" size={32} />
+                <Text style={styles.cardText}>Scan Text</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
 
-          <TouchableOpacity
-            style={[styles.card, { backgroundColor: '#f4d9f8' }]}
-            onPress={openCamera}
-          >
-            <Ionicons name="camera-outline" size={32} />
-            <Text style={styles.cardText}>Scan Text</Text>
-          </TouchableOpacity>
-        </View>
+          {/* ✅ Card 3 */}
+          <Animated.View style={{ transform: [{ scale: scaleCard3 }] }}>
+            <TouchableOpacity
+              style={[styles.card, { backgroundColor: "#d9f4ec", padding: 10 }]}
+              onPress={() => router.push("/MapScreen")}
+              onPressIn={() => pressIn(scaleCard3)}
+              onPressOut={() => pressOut(scaleCard3)}
+              activeOpacity={0.9}
+            >
+              <Ionicons name="location-outline" size={32} />
+              <Text style={styles.cardText}>My Location</Text>
+            </TouchableOpacity>
+          </Animated.View>
 
-        <TouchableOpacity
-          style={[styles.card, { backgroundColor: "#d9f4ec", padding: 10 }]}
-          onPress={() => router.push("/MapScreen")}
-          activeOpacity={0.6}
-        >
-          <Ionicons name="location-outline" size={32} />
-          <Text style={styles.cardText}>My Location</Text>
-        </TouchableOpacity>
+          <View style={styles.studylistSection}>
+            <Text style={styles.sectionTitle}>{"\n"}My Studylists</Text>
+            <Text style={styles.subtitle}>Tap to learn more</Text>
 
-        <View style={styles.studylistSection}>
-          <Text style={styles.sectionTitle}>{"\n"}My Studylists</Text>
-          <Text style={styles.subtitle}>Tap to learn more</Text>
-
-          <TouchableOpacity
-            style={styles.favoriteCard}
-            onPress={() => router.push("/favorites")}
-            activeOpacity={0.8}
-          >
-            <View style={styles.iconContainer}>
-              <MaterialCommunityIcons name="bookmark-outline" size={22} color="#fff" />
-            </View>
-            <View>
-              <Text style={styles.favoriteTitle}>My favorites</Text>
-              <Text style={styles.favoriteSubtitle}>{favorites.length} saved books</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.continueSection}>
-          <Text style={styles.sectionTitle}>Continue reading</Text>
-          <Text style={styles.subtitle}>
-            {currentUser
-              ? "Continue where you left off"
-              : "Login or Register to continue where you left off"}
-          </Text>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 15 }}>
-            {sortedBooks.map((book) => {
-              const isFavorite = favorites.some(fav => fav.id === book.id);
-              return (
-                <View key={book.id} style={styles.bookCard}>
-                  <TouchableOpacity
-                    testID="favorite-heart"
-                    onPress={() => toggleFavorite(book)}
-                    style={{ alignSelf: "flex-end", marginBottom: 4 }}
-                  >
-                    <Ionicons
-                      name={isFavorite ? "heart" : "heart-outline"}
-                      size={20}
-                      color={isFavorite ? "#f4d9f8" : "black"}
-                    />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity onPress={() => Linking.openURL(book.link)}>
-                    <Image source={{ uri: book.cover }} style={styles.cover} />
-                  </TouchableOpacity>
-
-                  <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>
-                  <Text style={styles.bookAuthor}>{book.author}</Text>
+            {/* ✅ Card 4 */}
+            <Animated.View style={{ transform: [{ scale: scaleCard4 }] }}>
+              <TouchableOpacity
+                style={styles.favoriteCard}
+                onPress={() => router.push("/favorites")}
+                onPressIn={() => pressIn(scaleCard4)}
+                onPressOut={() => pressOut(scaleCard4)}
+                activeOpacity={0.9}
+              >
+                <View style={styles.iconContainer}>
+                  <MaterialCommunityIcons
+                    name="bookmark-outline"
+                    size={22}
+                    color="#fff"
+                  />
                 </View>
-              );
-            })}
-          </ScrollView>
-        </View>
+                <View>
+                  <Text style={styles.favoriteTitle}>My favorites</Text>
+                  <Text style={styles.favoriteSubtitle}>
+                    {favorites.length} saved books
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
 
-      </ScrollView>
+          <View style={styles.continueSection}>
+            <Text style={styles.sectionTitle}>Continue reading</Text>
+            <Text style={styles.subtitle}>
+              {currentUser
+                ? "Continue where you left off"
+                : "Login or Register to continue where you left off"}
+            </Text>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 15 }}>
+              {sortedBooks.map((book) => {
+                const isFavorite = favorites.some((fav) => fav.id === book.id);
+                return (
+                  <View key={book.id} style={styles.bookCard}>
+                    <TouchableOpacity
+                      testID="favorite-heart"
+                      onPress={() => toggleFavorite(book)}
+                      style={{ alignSelf: "flex-end", marginBottom: 4 }}
+                    >
+                      <Ionicons
+                        name={isFavorite ? "heart" : "heart-outline"}
+                        size={20}
+                        color={isFavorite ? "#f4d9f8" : "black"}
+                      />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => Linking.openURL(book.link)}>
+                      <Image source={{ uri: book.cover }} style={styles.cover} />
+                    </TouchableOpacity>
+
+                    <Text style={styles.bookTitle} numberOfLines={2}>
+                      {book.title}
+                    </Text>
+                    <Text style={styles.bookAuthor}>{book.author}</Text>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </ScrollView>
+      </Animated.View>
+
       <Footer onHomePress={refreshHome} />
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fdfcff" },
