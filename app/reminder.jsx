@@ -157,7 +157,7 @@ export default function Reminder() {
     }
   };
 
-  // ✅ DELETE (UI jote le të mbetet deleteReminder(item.id))
+  // ✅ DELETE
   const deleteReminder = async (id) => {
     if (!user?.uid) return;
 
