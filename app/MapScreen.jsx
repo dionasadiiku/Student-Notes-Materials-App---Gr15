@@ -1,55 +1,117 @@
-import { render } from "@testing-library/react-native";
-import MapScreen from "../app/map";
+import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import MapView, { Marker } from "react-native-maps";
 
-// 🔴 REQUIRED: mock native animated (CRITICAL)
-jest.mock("react-native/Libraries/Animated/NativeAnimatedHelper");
+export default function MapScreen() {
+  const router = useRouter();
+  const [location, setLocation] = useState(null);
 
-// 🔴 Mock expo-router
-jest.mock("expo-router", () => ({
-  useRouter: () => ({
-    back: jest.fn(),
-  }),
-}));
+  useEffect(() => {
+    let subscription = null;
 
-// 🔴 Mock expo-location
-jest.mock("expo-location", () => ({
-  requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({
-    status: "granted",
-  }),
-  watchPositionAsync: jest.fn().mockResolvedValue({
-    remove: jest.fn(),
-  }),
-  Accuracy: {
-    High: 1,
-  },
-}));
+    const startTracking = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
 
-// 🔴 Mock react-native-maps
-jest.mock("react-native-maps", () => {
-  const React = require("react");
-  const { View } = require("react-native");
+      subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 5000,
+          distanceInterval: 10,
+        },
+        (loc) => {
+          const coords = {
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+          };
 
-  const MockMapView = ({ children, ...props }) => (
-    <View {...props}>{children}</View>
+          setLocation(coords);
+        }
+      );
+    };
+
+    startTracking();
+
+    // 🧹 Stop GPS when leaving screen
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
+
+  if (!location) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* 🔙 Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>My Location</Text>
+      </View>
+
+      {/* 🗺️ Map */}
+      <MapView
+        testID="map"
+        style={styles.map}
+        region={{
+          latitude: location.latitude,
+          longitude: location.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }}
+        showsUserLocation
+        followsUserLocation
+      >
+        <Marker coordinate={location} title="You are here" />
+      </MapView>
+    </View>
   );
+}
 
-  const MockMarker = (props) => <View {...props} />;
-
-  return {
-    __esModule: true,
-    default: MockMapView,
-    Marker: MockMarker,
-  };
-});
-
-// 🔴 Mock vector icons
-jest.mock("@expo/vector-icons", () => ({
-  Ionicons: "Ionicons",
-}));
-
-describe("MapScreen Snapshot", () => {
-  it("renders correctly (loader state)", () => {
-    const tree = render(<MapScreen />).toJSON();
-    expect(tree).toMatchSnapshot();
-  });
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    right: 20,
+    zIndex: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 16,
+    elevation: 4,
+  },
+  headerTitle: {
+    marginLeft: 12,
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });
