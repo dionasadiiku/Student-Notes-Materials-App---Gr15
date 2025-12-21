@@ -10,6 +10,8 @@ import {
   query,
   updateDoc,
   where,
+  serverTimestamp, 
+  setDoc,
 } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -27,11 +29,8 @@ import { auth, db } from "../firebase";
 import Footer from "./components/footer";
 import Header from "./components/header";
 
-import {
-  registerForNotifications,
-  sendLocalNotification,
-  saveNotificationToFirestore,
-} from "../notifications";
+import * as Notifications from "expo-notifications";
+import { registerPushNotifications } from "../notifications";
 
 
 export default function RecordingScreen() {
@@ -49,9 +48,45 @@ export default function RecordingScreen() {
   const [editingId, setEditingId] = useState(null);
   const [editedName, setEditedName] = useState("");
 
+
+  // ✅ si profja: vetëm permission + channel
   useEffect(() => {
-    registerForNotifications();
+    registerPushNotifications();
   }, []);
+
+  // ✅ LOCAL NOTIF (instant) — këtu, jo në notifications.js
+  const sendLocalNotification = async (title, body) => {
+    if (Platform.OS === "web") return;
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+      },
+      trigger: null,
+    });
+  };
+
+  // ✅ SAVE NOTIF TO FIRESTORE SUBCOLLECTION — këtu, jo në notifications.js
+  const saveNotificationToSubcollection = async (data) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // ensure user doc exists
+    await setDoc(
+      doc(db, "users", user.uid),
+      { createdAt: serverTimestamp() },
+      { merge: true }
+    );
+
+    // users/{uid}/notifications
+    await addDoc(collection(db, "users", user.uid, "notifications"), {
+      ...data,
+      createdAt: serverTimestamp(),
+      read: false,
+    });
+  };
 
   useEffect(() => {
     const loadRecordings = async () => {
@@ -171,7 +206,8 @@ export default function RecordingScreen() {
 
       await sendLocalNotification("Recording saved", message);
 
-      await saveNotificationToFirestore({
+      // ✅ save to users/{uid}/notifications
+      await saveNotificationToSubcollection({
         type: "recording",
         title: "Recording saved",
         message,
@@ -253,7 +289,7 @@ export default function RecordingScreen() {
       /* 🔔 SHTESË: notification për fshirje */
       await sendLocalNotification("Recording deleted", item.name);
 
-      await saveNotificationToFirestore({
+      await saveNotificationToSubcollection({
         type: "recording",
         title: "Recording deleted",
         message: item.name,
