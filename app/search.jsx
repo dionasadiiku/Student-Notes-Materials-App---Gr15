@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import React from "react";
 import { useRouter } from "expo-router";
 import { useState, useEffect, useCallback, useMemo } from "react"; // NEW
 import {
