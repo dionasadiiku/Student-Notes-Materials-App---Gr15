@@ -291,6 +291,7 @@ export default function Reminder() {
     const date = val?.toDate ? val.toDate() : val;
     return date?.toLocaleString();
   };
+  
    return (
     <View style={styles.container}>
       <Header />
