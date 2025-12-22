@@ -1,21 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
 import { useRouter } from "expo-router";
-import { useState, useEffect, useCallback, useMemo } from "react"; // NEW
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
+  Animated,
   FlatList,
+  Image,
+  Linking,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Image,
-  Linking,
-  ActivityIndicator,
-  Animated, // NEW
 } from "react-native";
-import Footer from "./components/footer";
-import Header from "./components/header";
+import Footer from "../components/footer";
+import Header from "../components/header";
 
 const mockData = [
   { id: "1", title: "Math Notes" },

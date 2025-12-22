@@ -1,25 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { doc, updateDoc } from "firebase/firestore";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Modal,
   Animated,
+  Modal,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
-  View,
+  TouchableOpacity
 } from "react-native";
-import { auth, db } from "../../firebase";
+import { auth, db } from "../firebase";
 
 export default function FavoriteModal({ visible, onClose, book }) {
   const [progress, setProgress] = useState(0);
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState("");
 
-  //  Fade animation ref
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
 
   useEffect(() => {
     if (book) {
@@ -31,20 +31,34 @@ export default function FavoriteModal({ visible, onClose, book }) {
 
   //  When modal opens/closes → animate opacity
   useEffect(() => {
-    if (visible) {
+  if (visible) {
+    Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 250,
         useNativeDriver: true,
-      }).start();
-    } else {
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 6,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  } else {
+    Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 250,
+        duration: 200,
         useNativeDriver: true,
-      }).start();
-    }
-  }, [visible]);
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.9,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }
+}, [visible]);
 
   const handleSave = async () => {
     if (!auth.currentUser || !book?.id) return;
@@ -58,10 +72,10 @@ export default function FavoriteModal({ visible, onClose, book }) {
 
   return (
     <Modal visible={visible} transparent animationType="none">
-      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-        <Animated.View
-          style={[styles.modal, { transform: [{ scale: fadeAnim }] }]}
-        >
+  <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+    <Animated.View
+      style={[styles.modal, { transform: [{ scale: scaleAnim }] }]}
+    >
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
             <Ionicons name="close" size={24} color="#000" />
           </TouchableOpacity>

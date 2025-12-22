@@ -5,8 +5,8 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { AuthProvider } from "../context/AuthContext"; // Sigurohu që rruga është relative dhe file quhet AuthContext.js
 import { auth } from "../firebase";
-import { AuthProvider } from "./context/AuthContext"; // Sigurohu që rruga është relative dhe file quhet AuthContext.js
 
 export default function Layout() {
   const colorScheme = useColorScheme();

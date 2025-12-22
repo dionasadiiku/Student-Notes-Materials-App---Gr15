@@ -13,9 +13,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Footer from "../components/footer";
+import Header from "../components/header";
 import { auth } from "../firebase";
-import Footer from "./components/footer";
-import Header from "./components/header";
 
 
 export default function Profile() {

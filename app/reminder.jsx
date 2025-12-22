@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -16,8 +17,11 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import * as Notifications from "expo-notifications";
 
-import Footer from "./components/footer";
-import Header from "./components/header";
+import Footer from "../components/footer";
+import Header from "../components/header";
+
+import AnimatedButton from "../components/AnimatedButton";
+import FadeModal from "../components/FadeModal";
 
 import {
   addDoc,
@@ -26,15 +30,68 @@ import {
   doc,
   onSnapshot,
   serverTimestamp,
+  setDoc,
   updateDoc,
-  setDoc, // ✅ SHTOJE
 } from "firebase/firestore";
 
+import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
-import { useAuth } from "./context/AuthContext";
-
-// ✅ përdore notifications.js
 import { registerPushNotifications } from "../notifications";
+
+/* ----------------------- Helpers (Date safe) ----------------------- */
+const toJSDate = (val) => {
+  if (!val) return null;
+  if (val?.toDate) return val.toDate(); // Firestore Timestamp
+  if (val instanceof Date) return val; // JS Date
+  return null;
+};
+
+const formatAnyDate = (val) => {
+  const d = toJSDate(val);
+  return d ? d.toLocaleString() : "";
+};
+
+/* ----------------------- Memoized Item ----------------------- */
+const ReminderItem = React.memo(function ReminderItem({
+  item,
+  onOpen,
+  onEdit,
+  onDelete,
+}) {
+  return (
+    <TouchableOpacity onPress={() => onOpen(item)} activeOpacity={0.85}>
+      <View style={styles.reminderRow}>
+        <View style={{ flex: 1 }}>
+          {item.type === "photo" ? (
+            <>
+              <Image source={{ uri: item.uri }} style={styles.photo} />
+              {!!item.text && <Text style={styles.reminderText}>{item.text}</Text>}
+            </>
+          ) : (
+            <Text style={styles.reminderText}>{item.text}</Text>
+          )}
+
+          <Text style={styles.dateText}>Created: {formatAnyDate(item.createdAt)}</Text>
+
+          {!!item.remindAt && (
+            <Text style={styles.dateText}>Reminder: {formatAnyDate(item.remindAt)}</Text>
+          )}
+        </View>
+
+        {/* Secondary actions (no AnimatedButton) */}
+        <View style={styles.rowActions}>
+          <TouchableOpacity onPress={() => onEdit(item)} activeOpacity={0.7}>
+            <Text style={styles.editText}>Edit</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => onDelete(item.id)} activeOpacity={0.7}>
+            <Text style={styles.deleteText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+});
 
 export default function Reminder() {
   const { user } = useAuth();
@@ -49,30 +106,26 @@ export default function Reminder() {
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [selectedPhotoUri, setSelectedPhotoUri] = useState(null);
 
-  // ✅ LOAD reminders
+  /* ----------------------- Load reminders ----------------------- */
   useEffect(() => {
     if (!user?.uid) return;
 
     const ref = collection(db, "users", user.uid, "reminders");
-
     const unsubscribe = onSnapshot(ref, (snapshot) => {
-      const list = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
+      const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       setReminders(list);
     });
 
     return unsubscribe;
   }, [user?.uid]);
 
-  // ✅ si te Recording: vetëm permissions + channel
+  /* ----------------------- Notification permissions ----------------------- */
   useEffect(() => {
     registerPushNotifications();
   }, []);
 
-  // ✅ schedule notif në kohën e zgjedhur + kthe ID
-  const scheduleNotification = async (title, date) => {
+  /* ----------------------- Schedule notification ----------------------- */
+  const scheduleNotification = useCallback(async (title, date) => {
     if (Platform.OS === "web") return null;
 
     try {
@@ -82,7 +135,7 @@ export default function Reminder() {
           body: title || "You have a reminder.",
           sound: true,
         },
-        trigger: date, // ✅ vjen në kohën e zgjedhur
+        trigger: date,
       });
 
       return notificationId;
@@ -90,51 +143,55 @@ export default function Reminder() {
       console.log("Notification Error:", err);
       return null;
     }
-  };
+  }, []);
 
-  // ✅ ruaje notif në users/{uid}/notifications (si Recording)
-  const saveNotificationToSubcollection = async (data) => {
-    if (!user?.uid) return;
+  /* ----------------------- Save notification log ----------------------- */
+  const saveNotificationToSubcollection = useCallback(
+    async (data) => {
+      if (!user?.uid) return;
 
-    // ensure user doc exists
-    await setDoc(
-      doc(db, "users", user.uid),
-      { createdAt: serverTimestamp() },
-      { merge: true }
-    );
+      await setDoc(
+        doc(db, "users", user.uid),
+        { createdAt: serverTimestamp() },
+        { merge: true }
+      );
 
-    await addDoc(collection(db, "users", user.uid, "notifications"), {
-      ...data,
-      createdAt: serverTimestamp(),
-      read: false,
-    });
-  };
+      await addDoc(collection(db, "users", user.uid, "notifications"), {
+        ...data,
+        createdAt: serverTimestamp(),
+        read: false,
+      });
+    },
+    [user?.uid]
+  );
 
-  // ✅ Add TEXT reminder → Open Modal
-  const addReminder = () => {
+  /* ----------------------- Add text reminder -> open modal ----------------------- */
+  const addReminder = useCallback(() => {
     if (!newReminder.trim() || !user?.uid) return;
 
     const now = new Date();
+    const defaultTime = new Date(now.getTime() + 5 * 60 * 1000);
+
     setEditingReminder({
       id: null,
       type: "text",
-      text: newReminder,
+      text: newReminder.trim(),
       uri: null,
-      remindAt: new Date(now.getTime() + 5 * 60 * 1000),
-      notificationId: null, // ✅
+      remindAt: defaultTime,
+      notificationId: null,
     });
 
-    setTempDate(new Date(now.getTime() + 5 * 60 * 1000));
+    setTempDate(defaultTime);
     setShowModal(true);
-  };
+  }, [newReminder, user?.uid]);
 
-  // ✅ CAMERA → Open modal with photo
-  const openCamera = async () => {
+  /* ----------------------- Camera -> open modal with photo ----------------------- */
+  const openCamera = useCallback(async () => {
     if (!user?.uid) return;
 
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      alert("Camera permission denied.");
+      Alert.alert("Permission denied", "Camera permission denied.");
       return;
     }
 
@@ -142,53 +199,54 @@ export default function Reminder() {
 
     if (!result.canceled) {
       const now = new Date();
+      const defaultTime = new Date(now.getTime() + 5 * 60 * 1000);
 
       setEditingReminder({
         id: null,
         type: "photo",
         text: "",
         uri: result.assets[0].uri,
-        remindAt: new Date(now.getTime() + 5 * 60 * 1000),
-        notificationId: null, // ✅
+        remindAt: defaultTime,
+        notificationId: null,
       });
 
-      setTempDate(new Date(now.getTime() + 5 * 60 * 1000));
+      setTempDate(defaultTime);
       setShowModal(true);
     }
-  };
+  }, [user?.uid]);
 
-  // ✅ DELETE
-  const deleteReminder = async (id) => {
-    if (!user?.uid) return;
+  /* ----------------------- Delete reminder ----------------------- */
+  const deleteReminder = useCallback(
+    async (id) => {
+      if (!user?.uid) return;
 
-    try {
-      // gjeje reminder-in që me pas notificationId
-      const item = reminders.find((r) => r.id === id);
+      try {
+        const item = reminders.find((r) => r.id === id);
 
-      // cancel scheduled notification
-      if (item?.notificationId && Platform.OS !== "web") {
-        await Notifications.cancelScheduledNotificationAsync(item.notificationId);
+        if (item?.notificationId && Platform.OS !== "web") {
+          await Notifications.cancelScheduledNotificationAsync(item.notificationId);
+        }
+
+        await deleteDoc(doc(db, "users", user.uid, "reminders", id));
+
+        await saveNotificationToSubcollection({
+          type: "reminder",
+          title: "Reminder deleted",
+          message: item?.text || "Reminder",
+          reminderId: id,
+          notificationId: item?.notificationId || null,
+          scheduledAt: item?.remindAt || new Date(),
+        });
+      } catch (e) {
+        console.log("deleteReminder error:", e);
       }
+    },
+    [user?.uid, reminders, saveNotificationToSubcollection]
+  );
 
-      await deleteDoc(doc(db, "users", user.uid, "reminders", id));
-
-      // (opsionale) ruaje edhe log për delete
-      await saveNotificationToSubcollection({
-        type: "reminder",
-        title: "Reminder deleted",
-        message: item?.text || "Reminder",
-        reminderId: id,
-        notificationId: item?.notificationId || null,
-        scheduledAt: item?.remindAt || new Date(),
-      });
-    } catch (e) {
-      console.log("deleteReminder error:", e);
-    }
-  };
-
-  const startEditReminder = (item) => {
-    const remindAt =
-      item.remindAt && item.remindAt.toDate ? item.remindAt.toDate() : new Date();
+  /* ----------------------- Start edit ----------------------- */
+  const startEditReminder = useCallback((item) => {
+    const remindAt = toJSDate(item.remindAt) || new Date();
 
     setEditingReminder({
       id: item.id,
@@ -196,25 +254,31 @@ export default function Reminder() {
       text: item.text || "",
       uri: item.uri || null,
       remindAt,
-      notificationId: item.notificationId || null, // ✅ RUJE
+      notificationId: item.notificationId || null,
     });
 
     setTempDate(remindAt);
     setShowModal(true);
-  };
+  }, []);
 
-  const saveReminderFromModal = async () => {
+  /* ----------------------- Save from modal ----------------------- */
+  const saveReminderFromModal = useCallback(async () => {
     if (!user?.uid || !editingReminder) return;
 
+    // ✅ validate future time (mobile)
+    if (Platform.OS !== "web" && tempDate.getTime() <= Date.now()) {
+      Alert.alert("Invalid time", "Please select a future date/time.");
+      return;
+    }
+
     try {
-      // ✅ nëse po editon dhe ka pas notif të vjetër → anuloje
+      // cancel old scheduled notification (if editing)
       if (editingReminder.notificationId && Platform.OS !== "web") {
         await Notifications.cancelScheduledNotificationAsync(
           editingReminder.notificationId
         );
       }
 
-      // ✅ schedule notif i ri + merre ID
       const newNotificationId = await scheduleNotification(
         editingReminder.text,
         tempDate
@@ -225,20 +289,15 @@ export default function Reminder() {
         text: editingReminder.text,
         uri: editingReminder.uri || null,
         remindAt: tempDate,
-        notificationId: newNotificationId || null, // ✅ ruaje te reminder
+        notificationId: newNotificationId || null,
       };
 
       if (!editingReminder.id) {
-        // ✅ CREATE
         const docRef = await addDoc(
           collection(db, "users", user.uid, "reminders"),
-          {
-            ...data,
-            createdAt: serverTimestamp(),
-          }
+          { ...data, createdAt: serverTimestamp() }
         );
 
-        // ✅ save notif log
         await saveNotificationToSubcollection({
           type: "reminder",
           title: "Reminder scheduled",
@@ -248,7 +307,6 @@ export default function Reminder() {
           scheduledAt: tempDate,
         });
       } else {
-        // ✅ UPDATE
         await updateDoc(
           doc(db, "users", user.uid, "reminders", editingReminder.id),
           data
@@ -270,9 +328,16 @@ export default function Reminder() {
     } catch (e) {
       console.log("saveReminderFromModal error:", e);
     }
-  };
+  }, [
+    user?.uid,
+    editingReminder,
+    tempDate,
+    scheduleNotification,
+    saveNotificationToSubcollection,
+  ]);
 
-  const changePhotoInModal = async () => {
+  /* ----------------------- Change photo inside modal ----------------------- */
+  const changePhotoInModal = useCallback(async () => {
     const result = await ImagePicker.launchCameraAsync({ quality: 1 });
 
     if (!result.canceled) {
@@ -280,19 +345,45 @@ export default function Reminder() {
         prev ? { ...prev, uri: result.assets[0].uri, type: "photo" } : prev
       );
     }
-  };
+  }, []);
 
-  const formatDate = (timestamp) => {
-    if (!timestamp || !timestamp.toDate) return "";
-    return timestamp.toDate().toLocaleString();
-  };
+  /* ----------------------- Open item: photo -> viewer, text -> edit ----------------------- */
+  const onOpenItem = useCallback(
+    (item) => {
+      if (item.type === "photo") {
+        setSelectedPhotoUri(item.uri);
+        setPhotoModalVisible(true);
+      } else {
+        startEditReminder(item);
+      }
+    },
+    [startEditReminder]
+  );
 
-  const formatRemindAt = (val) => {
-    const date = val?.toDate ? val.toDate() : val;
-    return date?.toLocaleString();
-  };
-  
-   return (
+  /* ----------------------- useMemo sort ----------------------- */
+  const sortedReminders = useMemo(() => {
+    const copy = [...reminders];
+    copy.sort((a, b) => {
+      const da = toJSDate(a.remindAt)?.getTime() ?? 0;
+      const dbb = toJSDate(b.remindAt)?.getTime() ?? 0;
+      return dbb - da;
+    });
+    return copy;
+  }, [reminders]);
+
+  const renderItem = useCallback(
+    ({ item }) => (
+      <ReminderItem
+        item={item}
+        onOpen={onOpenItem}
+        onEdit={startEditReminder}
+        onDelete={deleteReminder}
+      />
+    ),
+    [onOpenItem, startEditReminder, deleteReminder]
+  );
+
+  return (
     <View style={styles.container}>
       <Header />
 
@@ -310,18 +401,28 @@ export default function Reminder() {
             value={newReminder}
             onChangeText={setNewReminder}
           />
-          <TouchableOpacity style={styles.button} onPress={addReminder}>
-            <Text style={styles.buttonText}>Add</Text>
-          </TouchableOpacity>
+
+          {/* ✅ Primary action */}
+          <AnimatedButton
+            style={styles.button}
+            textStyle={styles.buttonText}
+            onPress={addReminder}
+            disabled={!newReminder.trim()}
+          >
+            Add
+          </AnimatedButton>
         </View>
 
-        {/* Camera */}
-        <TouchableOpacity style={styles.scanButton} onPress={openCamera}>
-          <Text style={styles.scanText}>Scan (camera)</Text>
-        </TouchableOpacity>
+        {/* ✅ Primary action */}
+        <AnimatedButton
+          style={styles.scanButton}
+          textStyle={styles.scanText}
+          onPress={openCamera}
+        >
+          Scan (camera)
+        </AnimatedButton>
 
-        {/* Empty */}
-        {reminders.length === 0 ? (
+        {sortedReminders.length === 0 ? (
           <View style={styles.emptyBox}>
             <Text style={styles.emptyTitle}>No Reminders Yet</Text>
             <Text style={styles.emptySubtitle}>
@@ -330,126 +431,57 @@ export default function Reminder() {
           </View>
         ) : (
           <FlatList
-            data={reminders}
+            data={sortedReminders}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingBottom: 20 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => {
-                  if (item.type === "photo") {
-                    setSelectedPhotoUri(item.uri);
-                    setPhotoModalVisible(true);
-                  } else {
-                    startEditReminder(item);
-                  }
-                }}
-              >
-                <View style={styles.reminderRow}>
-                  <View style={{ flex: 1 }}>
-                    {item.type === "text" ? (
-                      <>
-                        <Text style={styles.reminderText}>{item.text}</Text>
-                        <Text style={styles.dateText}>
-                          Created: {formatDate(item.createdAt)}
-                        </Text>
-                        {item.remindAt && (
-                          <Text style={styles.dateText}>
-                            Reminder: {formatRemindAt(item.remindAt)}
-                          </Text>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Image
-                          source={{ uri: item.uri }}
-                          style={styles.photo}
-                        />
-                        {item.text ? (
-                          <Text style={styles.reminderText}>{item.text}</Text>
-                        ) : null}
-
-                        <Text style={styles.dateText}>
-                          Created: {formatDate(item.createdAt)}
-                        </Text>
-                        {item.remindAt && (
-                          <Text style={styles.dateText}>
-                            Reminder: {formatRemindAt(item.remindAt)}
-                          </Text>
-                        )}
-                      </>
-                    )}
-                  </View>
-
-                  {/* Edit / Delete */}
-                  <View style={styles.rowActions}>
-                    <TouchableOpacity onPress={() => startEditReminder(item)}>
-                      <Text style={styles.editText}>Edit</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      onPress={() => deleteReminder(item.id)}
-                    >
-                      <Text style={styles.deleteText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
+            renderItem={renderItem}
           />
         )}
       </KeyboardAvoidingView>
 
-      {/* PHOTO VIEW MODAL */}
+      {/* PHOTO VIEW MODAL (simple) */}
       <Modal visible={photoModalVisible} transparent>
         <View style={styles.photoModalBg}>
           <Image source={{ uri: selectedPhotoUri }} style={styles.fullPhoto} />
-          <TouchableOpacity
+
+          <AnimatedButton
             style={styles.closePhotoBtn}
+            textStyle={styles.closePhotoText}
             onPress={() => setPhotoModalVisible(false)}
           >
-            <Text style={{ color: "#fff", fontSize: 18, fontWeight: "700" }}>
-              Close
-            </Text>
-          </TouchableOpacity>
+            Close
+          </AnimatedButton>
         </View>
       </Modal>
 
-      {/* CREATE / EDIT MODAL */}
-      <Modal visible={showModal} transparent animationType="slide">
+      {/* ✅ CREATE / EDIT MODAL with FadeModal */}
+      <FadeModal visible={showModal}>
         <View style={styles.modalBg}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>
               {editingReminder?.id ? "Edit Reminder" : "New Reminder"}
             </Text>
 
-            {/* Photo preview if exists */}
             {editingReminder?.type === "photo" && editingReminder?.uri && (
               <>
-                <Image
-                  source={{ uri: editingReminder.uri }}
-                  style={styles.modalImage}
-                />
-                <TouchableOpacity onPress={changePhotoInModal}>
+                <Image source={{ uri: editingReminder.uri }} style={styles.modalImage} />
+                <TouchableOpacity onPress={changePhotoInModal} activeOpacity={0.7}>
                   <Text style={styles.changePhotoText}>Change Photo</Text>
                 </TouchableOpacity>
               </>
             )}
 
-            {/* Text input */}
             <TextInput
               style={styles.modalInput}
               placeholder="Reminder text..."
               value={editingReminder?.text}
               onChangeText={(txt) =>
-                setEditingReminder((prev) =>
-                  prev ? { ...prev, text: txt } : prev
-                )
+                setEditingReminder((prev) => (prev ? { ...prev, text: txt } : prev))
               }
             />
 
             <Text style={styles.modalLabel}>Select date/time</Text>
 
-            {/* Disable DateTimePicker on Web */}
             {Platform.OS !== "web" ? (
               <DateTimePicker
                 value={tempDate}
@@ -462,47 +494,37 @@ export default function Reminder() {
               </Text>
             )}
 
-            <TouchableOpacity
+            <AnimatedButton
               style={styles.modalBtn}
+              textStyle={styles.modalBtnText}
               onPress={saveReminderFromModal}
             >
-              <Text style={styles.modalBtnText}>
-                {editingReminder?.id ? "Save Changes" : "Save Reminder"}
-              </Text>
-            </TouchableOpacity>
+              {editingReminder?.id ? "Save Changes" : "Save Reminder"}
+            </AnimatedButton>
 
-            <TouchableOpacity
+            <AnimatedButton
               style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
-              onPress={() => setShowModal(false)}
+              textStyle={[styles.modalBtnText, { color: "#333" }]}
+              onPress={() => {
+                setShowModal(false);
+                setEditingReminder(null);
+              }}
             >
-              <Text style={[styles.modalBtnText, { color: "#333" }]}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
+              Cancel
+            </AnimatedButton>
           </View>
         </View>
-      </Modal>
+      </FadeModal>
 
       <Footer />
     </View>
   );
 }
 
-/* ---------------------------------------------------- *
- *                        STYLES
- * ---------------------------------------------------- */
-
+/* ----------------------- Styles (same as yours) ----------------------- */
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F6FF",
-  },
-
-  content: {
-    flex: 1,
-    paddingHorizontal: 22,
-    paddingTop: 20,
-  },
+  container: { flex: 1, backgroundColor: "#F8F6FF" },
+  content: { flex: 1, paddingHorizontal: 22, paddingTop: 20 },
 
   title: {
     fontSize: 30,
@@ -513,11 +535,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  /* ---------------- INPUT AREA ---------------- */
-  inputRow: {
-    flexDirection: "row",
-    marginBottom: 18,
-  },
+  inputRow: { flexDirection: "row", marginBottom: 18 },
 
   input: {
     flex: 1,
@@ -545,13 +563,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 4 },
   },
-  buttonText: {
-    fontWeight: "700",
-    color: "white",
-    fontSize: 15,
-  },
+  buttonText: { fontWeight: "700", color: "white", fontSize: 15 },
 
-  /* SCAN BUTTON */
   scanButton: {
     backgroundColor: "#C39BFF",
     padding: 14,
@@ -562,13 +575,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowOffset: { width: 0, height: 4 },
   },
-  scanText: {
-    fontWeight: "700",
-    color: "#fff",
-    fontSize: 16,
-  },
+  scanText: { fontWeight: "700", color: "#fff", fontSize: 16 },
 
-  /* ---------------- EMPTY STATE ---------------- */
   emptyBox: {
     marginTop: 50,
     backgroundColor: "#ffffff",
@@ -579,11 +587,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 4 },
   },
-  emptyTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#2C2C2E",
-  },
+  emptyTitle: { fontSize: 22, fontWeight: "700", color: "#2C2C2E" },
   emptySubtitle: {
     marginTop: 10,
     color: "#6E6E73",
@@ -592,7 +596,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  /* ---------------- REMINDER CARD ---------------- */
   reminderRow: {
     backgroundColor: "#ffffff",
     padding: 18,
@@ -604,17 +607,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
   },
 
-  reminderText: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: "#1C1C1E",
-  },
-
-  dateText: {
-    fontSize: 12,
-    marginTop: 6,
-    color: "#6E6E73",
-  },
+  reminderText: { fontSize: 17, fontWeight: "600", color: "#1C1C1E" },
+  dateText: { fontSize: 12, marginTop: 6, color: "#6E6E73" },
 
   rowActions: {
     marginLeft: 15,
@@ -622,17 +616,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
-  editText: {
-    color: "#007AFF",
-    fontWeight: "600",
-    marginBottom: 10,
-    fontSize: 14,
-  },
-  deleteText: {
-    color: "#FF453A",
-    fontSize: 22,
-    fontWeight: "700",
-  },
+  editText: { color: "#007AFF", fontWeight: "600", marginBottom: 10, fontSize: 14 },
+  deleteText: { color: "#FF453A", fontSize: 22, fontWeight: "700" },
 
   photo: {
     width: 85,
@@ -643,7 +628,6 @@ const styles = StyleSheet.create({
     borderColor: "#eee",
   },
 
-  /* ---------------- FULL PHOTO MODAL ---------------- */
   photoModalBg: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.90)",
@@ -656,14 +640,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     resizeMode: "contain",
   },
-  closePhotoBtn: {
-    marginTop: 20,
-    padding: 12,
-    backgroundColor: "#333",
-    borderRadius: 10,
-  },
+  closePhotoBtn: { marginTop: 20, padding: 12, backgroundColor: "#333", borderRadius: 10 },
+  closePhotoText: { color: "#fff", fontSize: 18, fontWeight: "700" },
 
-  /* ---------------- EDIT / CREATE MODAL ---------------- */
   modalBg: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
@@ -680,12 +659,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07,
     shadowOffset: { width: 0, height: 4 },
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    alignSelf: "center",
-    marginBottom: 16,
-  },
+  modalTitle: { fontSize: 22, fontWeight: "700", alignSelf: "center", marginBottom: 16 },
 
   modalInput: {
     width: "100%",
@@ -698,12 +672,7 @@ const styles = StyleSheet.create({
     color: "#000",
   },
 
-  modalLabel: {
-    fontWeight: "600",
-    fontSize: 14,
-    marginBottom: 8,
-    color: "#444",
-  },
+  modalLabel: { fontWeight: "600", fontSize: 14, marginBottom: 8, color: "#444" },
 
   modalBtn: {
     backgroundColor: "#8A4AF3",
@@ -716,25 +685,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 4 },
   },
+  modalBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 
-  modalBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  modalImage: {
-    width: 140,
-    height: 140,
-    borderRadius: 16,
-    marginBottom: 12,
-    alignSelf: "center",
-  },
-  changePhotoText: {
-    textAlign: "center",
-    fontWeight: "600",
-    color: "#007AFF",
-    marginBottom: 12,
-    fontSize: 14,
-  },
+  modalImage: { width: 140, height: 140, borderRadius: 16, marginBottom: 12, alignSelf: "center" },
+  changePhotoText: { textAlign: "center", fontWeight: "600", color: "#007AFF", marginBottom: 12, fontSize: 14 },
 });

@@ -13,8 +13,8 @@ import {
   View
 } from 'react-native';
 
-import Footer from './components/footer';
-import Header from './components/header';
+import Footer from '../components/footer';
+import Header from '../components/header';
 
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";

@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { db, auth } from "../firebase"; 
 import {
+  Alert,
   FlatList,
   Linking,
   Modal,
@@ -10,12 +10,12 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Alert,
 } from "react-native";
-import Footer from "./components/footer";
-import Header from "./components/header";
+import Footer from "../components/footer";
+import Header from "../components/header";
+import { auth, db } from "../firebase";
 
-import { collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 
 const settingsItems = [
   { id: "0", title: "Profile", screen: "/profile" }, 

@@ -8,10 +8,10 @@ import {
   doc,
   getDocs,
   query,
+  serverTimestamp,
+  setDoc,
   updateDoc,
   where,
-  serverTimestamp, 
-  setDoc,
 } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -25,9 +25,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Footer from "../components/footer";
+import Header from "../components/header";
 import { auth, db } from "../firebase";
-import Footer from "./components/footer";
-import Header from "./components/header";
 
 import * as Notifications from "expo-notifications";
 import { registerPushNotifications } from "../notifications";
