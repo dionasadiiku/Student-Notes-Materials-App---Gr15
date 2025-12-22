@@ -61,11 +61,11 @@ function Header({ onSettingsPress }) {
       )}
 
       <View style={styles.iconContainer}>
-        <AnimatedButton onPress={handleLogout} style={styles.iconBtn}>
+        <AnimatedButton onPress={handleLogout} style={styles.iconBtn} testID="logout-btn">
           <Ionicons name="log-out-outline" size={30} color="#000" />
         </AnimatedButton>
 
-        <AnimatedButton onPress={handleSettings} style={styles.iconBtn}>
+        <AnimatedButton onPress={handleSettings} style={styles.iconBtn} testID="settings-btn">
           <Ionicons name="settings-outline" size={28} color="#000" />
         </AnimatedButton>
       </View>

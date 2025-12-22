@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Image,
@@ -13,15 +14,15 @@ import {
   View,
 } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import * as Notifications from "expo-notifications";
 
-import Footer from "../components/footer";
-import Header from "../components/header";
-
 import AnimatedButton from "../components/AnimatedButton";
 import FadeModal from "../components/FadeModal";
+import Footer from "../components/footer";
+import Header from "../components/header";
 
 import {
   addDoc,
@@ -41,8 +42,8 @@ import { registerPushNotifications } from "../notifications";
 /* ----------------------- Helpers (Date safe) ----------------------- */
 const toJSDate = (val) => {
   if (!val) return null;
-  if (val?.toDate) return val.toDate(); // Firestore Timestamp
-  if (val instanceof Date) return val; // JS Date
+  if (val?.toDate) return val.toDate();
+  if (val instanceof Date) return val;
   return null;
 };
 
@@ -52,40 +53,49 @@ const formatAnyDate = (val) => {
 };
 
 /* ----------------------- Memoized Item ----------------------- */
-const ReminderItem = React.memo(function ReminderItem({
-  item,
-  onOpen,
-  onEdit,
-  onDelete,
-}) {
+const ReminderCard = React.memo(function ReminderCard({ item, onOpen, onEdit, onDelete }) {
+  const isPhoto = item.type === "photo";
+
   return (
-    <TouchableOpacity onPress={() => onOpen(item)} activeOpacity={0.85}>
-      <View style={styles.reminderRow}>
+    <TouchableOpacity onPress={() => onOpen(item)} activeOpacity={0.7} style={styles.card}>
+      <View style={styles.cardRow}>
+        {/* Left content */}
         <View style={{ flex: 1 }}>
-          {item.type === "photo" ? (
-            <>
-              <Image source={{ uri: item.uri }} style={styles.photo} />
-              {!!item.text && <Text style={styles.reminderText}>{item.text}</Text>}
-            </>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.typePill}>
+              <Text style={styles.typePillText}>{isPhoto ? "PHOTO" : "TEXT"}</Text>
+            </View>
+
+            {!!item.remindAt && (
+              <View style={styles.timePill}>
+                <Ionicons name="time-outline" size={14} color="#000" />
+                <Text style={styles.timePillText}>{formatAnyDate(item.remindAt)}</Text>
+              </View>
+            )}
+          </View>
+
+          {isPhoto ? (
+            <View style={{ marginTop: 10 }}>
+              <Image source={{ uri: item.uri }} style={styles.cardPhoto} />
+              {!!item.text && <Text style={styles.cardTitle}>{item.text}</Text>}
+            </View>
           ) : (
-            <Text style={styles.reminderText}>{item.text}</Text>
+            <Text style={[styles.cardTitle, { marginTop: 10 }]} numberOfLines={3}>
+              {item.text}
+            </Text>
           )}
 
-          <Text style={styles.dateText}>Created: {formatAnyDate(item.createdAt)}</Text>
-
-          {!!item.remindAt && (
-            <Text style={styles.dateText}>Reminder: {formatAnyDate(item.remindAt)}</Text>
-          )}
+          <Text style={styles.cardMeta}>Created: {formatAnyDate(item.createdAt)}</Text>
         </View>
 
-        {/* Secondary actions (no AnimatedButton) */}
-        <View style={styles.rowActions}>
-          <TouchableOpacity onPress={() => onEdit(item)} activeOpacity={0.7}>
-            <Text style={styles.editText}>Edit</Text>
+        {/* Right actions */}
+        <View style={styles.cardActions}>
+          <TouchableOpacity onPress={() => onEdit(item)} activeOpacity={0.7} style={styles.actionBtn}>
+            <Ionicons name="create-outline" size={18} color="#000" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => onDelete(item.id)} activeOpacity={0.7}>
-            <Text style={styles.deleteText}>✕</Text>
+          <TouchableOpacity onPress={() => onDelete(item.id)} activeOpacity={0.7} style={[styles.actionBtn, styles.deleteBtn]}>
+            <Ionicons name="trash-outline" size={18} color="#000" />
           </TouchableOpacity>
         </View>
       </View>
@@ -106,14 +116,18 @@ export default function Reminder() {
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [selectedPhotoUri, setSelectedPhotoUri] = useState(null);
 
+  const [loading, setLoading] = useState(true);
+
   /* ----------------------- Load reminders ----------------------- */
   useEffect(() => {
     if (!user?.uid) return;
 
+    setLoading(true);
     const ref = collection(db, "users", user.uid, "reminders");
     const unsubscribe = onSnapshot(ref, (snapshot) => {
       const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       setReminders(list);
+      setLoading(false);
     });
 
     return unsubscribe;
@@ -137,7 +151,6 @@ export default function Reminder() {
         },
         trigger: date,
       });
-
       return notificationId;
     } catch (err) {
       console.log("Notification Error:", err);
@@ -150,11 +163,7 @@ export default function Reminder() {
     async (data) => {
       if (!user?.uid) return;
 
-      await setDoc(
-        doc(db, "users", user.uid),
-        { createdAt: serverTimestamp() },
-        { merge: true }
-      );
+      await setDoc(doc(db, "users", user.uid), { createdAt: serverTimestamp() }, { merge: true });
 
       await addDoc(collection(db, "users", user.uid, "notifications"), {
         ...data,
@@ -165,7 +174,7 @@ export default function Reminder() {
     [user?.uid]
   );
 
-  /* ----------------------- Add text reminder -> open modal ----------------------- */
+  /* ----------------------- Open create modal from text ----------------------- */
   const addReminder = useCallback(() => {
     if (!newReminder.trim() || !user?.uid) return;
 
@@ -265,24 +274,17 @@ export default function Reminder() {
   const saveReminderFromModal = useCallback(async () => {
     if (!user?.uid || !editingReminder) return;
 
-    // ✅ validate future time (mobile)
     if (Platform.OS !== "web" && tempDate.getTime() <= Date.now()) {
       Alert.alert("Invalid time", "Please select a future date/time.");
       return;
     }
 
     try {
-      // cancel old scheduled notification (if editing)
       if (editingReminder.notificationId && Platform.OS !== "web") {
-        await Notifications.cancelScheduledNotificationAsync(
-          editingReminder.notificationId
-        );
+        await Notifications.cancelScheduledNotificationAsync(editingReminder.notificationId);
       }
 
-      const newNotificationId = await scheduleNotification(
-        editingReminder.text,
-        tempDate
-      );
+      const newNotificationId = await scheduleNotification(editingReminder.text, tempDate);
 
       const data = {
         type: editingReminder.type,
@@ -293,10 +295,10 @@ export default function Reminder() {
       };
 
       if (!editingReminder.id) {
-        const docRef = await addDoc(
-          collection(db, "users", user.uid, "reminders"),
-          { ...data, createdAt: serverTimestamp() }
-        );
+        const docRef = await addDoc(collection(db, "users", user.uid, "reminders"), {
+          ...data,
+          createdAt: serverTimestamp(),
+        });
 
         await saveNotificationToSubcollection({
           type: "reminder",
@@ -307,10 +309,7 @@ export default function Reminder() {
           scheduledAt: tempDate,
         });
       } else {
-        await updateDoc(
-          doc(db, "users", user.uid, "reminders", editingReminder.id),
-          data
-        );
+        await updateDoc(doc(db, "users", user.uid, "reminders", editingReminder.id), data);
 
         await saveNotificationToSubcollection({
           type: "reminder",
@@ -328,26 +327,18 @@ export default function Reminder() {
     } catch (e) {
       console.log("saveReminderFromModal error:", e);
     }
-  }, [
-    user?.uid,
-    editingReminder,
-    tempDate,
-    scheduleNotification,
-    saveNotificationToSubcollection,
-  ]);
+  }, [user?.uid, editingReminder, tempDate, scheduleNotification, saveNotificationToSubcollection]);
 
   /* ----------------------- Change photo inside modal ----------------------- */
   const changePhotoInModal = useCallback(async () => {
     const result = await ImagePicker.launchCameraAsync({ quality: 1 });
 
     if (!result.canceled) {
-      setEditingReminder((prev) =>
-        prev ? { ...prev, uri: result.assets[0].uri, type: "photo" } : prev
-      );
+      setEditingReminder((prev) => (prev ? { ...prev, uri: result.assets[0].uri, type: "photo" } : prev));
     }
   }, []);
 
-  /* ----------------------- Open item: photo -> viewer, text -> edit ----------------------- */
+  /* ----------------------- Open item ----------------------- */
   const onOpenItem = useCallback(
     (item) => {
       if (item.type === "photo") {
@@ -373,12 +364,7 @@ export default function Reminder() {
 
   const renderItem = useCallback(
     ({ item }) => (
-      <ReminderItem
-        item={item}
-        onOpen={onOpenItem}
-        onEdit={startEditReminder}
-        onDelete={deleteReminder}
-      />
+      <ReminderCard item={item} onOpen={onOpenItem} onEdit={startEditReminder} onDelete={deleteReminder} />
     ),
     [onOpenItem, startEditReminder, deleteReminder]
   );
@@ -391,70 +377,71 @@ export default function Reminder() {
         style={styles.content}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <Text style={styles.title}>Reminders</Text>
-
-        {/* Input row */}
-        <View style={styles.inputRow}>
-          <TextInput
-            placeholder="Write your reminder..."
-            style={styles.input}
-            value={newReminder}
-            onChangeText={setNewReminder}
-          />
-
-          {/* ✅ Primary action */}
-          <AnimatedButton
-            style={styles.button}
-            textStyle={styles.buttonText}
-            onPress={addReminder}
-            disabled={!newReminder.trim()}
-          >
-            Add
-          </AnimatedButton>
+        {/* Top bar like Search */}
+        <View style={styles.topBar}>
+          {/* //<Ionicons name="notifications-outline" size={24} color="#000" /> */}
+          <Text style={styles.screenTitle}>Reminders</Text>
         </View>
 
-        {/* ✅ Primary action */}
-        <AnimatedButton
-          style={styles.scanButton}
-          textStyle={styles.scanText}
-          onPress={openCamera}
-        >
-          Scan (camera)
-        </AnimatedButton>
-
-        {sortedReminders.length === 0 ? (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyTitle}>No Reminders Yet</Text>
-            <Text style={styles.emptySubtitle}>
-              Start writing a reminder or scan it using your camera.
-            </Text>
+        {/* Search-style input row */}
+        <View style={styles.inputRow}>
+          <View style={styles.inputWrap}>
+            <Ionicons name="create-outline" size={20} color="#555" style={{ marginRight: 8 }} />
+            <TextInput
+              placeholder="Write your reminder..."
+              placeholderTextColor="#999"
+              style={styles.input}
+              value={newReminder}
+              onChangeText={setNewReminder}
+            />
           </View>
+
+          <TouchableOpacity
+            style={[styles.primaryBtn, !newReminder.trim() && { opacity: 0.55 }]}
+            onPress={addReminder}
+            activeOpacity={0.7}
+            disabled={!newReminder.trim()}
+          >
+            <Text style={styles.primaryBtnText}>Add</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Scan button like Search style */}
+        <TouchableOpacity style={styles.secondaryBtn} onPress={openCamera} activeOpacity={0.7}>
+          <Ionicons name="camera-outline" size={20} color="#000" />
+          <Text style={styles.secondaryBtnText}>Scan (camera)</Text>
+        </TouchableOpacity>
+
+        {/* List */}
+        {loading ? (
+          <View style={{ marginTop: 30, alignItems: "center" }}>
+            <ActivityIndicator />
+            <Text style={{ marginTop: 10, color: "#777" }}>Loading reminders...</Text>
+          </View>
+        ) : sortedReminders.length === 0 ? (
+          <Text style={styles.noResults}>No reminders yet</Text>
         ) : (
           <FlatList
             data={sortedReminders}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingBottom: 20 }}
             renderItem={renderItem}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
           />
         )}
       </KeyboardAvoidingView>
 
-      {/* PHOTO VIEW MODAL (simple) */}
+      {/* PHOTO VIEW MODAL */}
       <Modal visible={photoModalVisible} transparent>
         <View style={styles.photoModalBg}>
           <Image source={{ uri: selectedPhotoUri }} style={styles.fullPhoto} />
-
-          <AnimatedButton
-            style={styles.closePhotoBtn}
-            textStyle={styles.closePhotoText}
-            onPress={() => setPhotoModalVisible(false)}
-          >
-            Close
-          </AnimatedButton>
+          <TouchableOpacity style={styles.closePhotoBtn} onPress={() => setPhotoModalVisible(false)} activeOpacity={0.7}>
+            <Text style={styles.closePhotoText}>Close</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
 
-      {/* ✅ CREATE / EDIT MODAL with FadeModal */}
+      {/* CREATE / EDIT MODAL */}
       <FadeModal visible={showModal}>
         <View style={styles.modalBg}>
           <View style={styles.modalBox}>
@@ -466,7 +453,7 @@ export default function Reminder() {
               <>
                 <Image source={{ uri: editingReminder.uri }} style={styles.modalImage} />
                 <TouchableOpacity onPress={changePhotoInModal} activeOpacity={0.7}>
-                  <Text style={styles.changePhotoText}>Change Photo</Text>
+                  <Text style={styles.linkText}>Change Photo</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -474,6 +461,7 @@ export default function Reminder() {
             <TextInput
               style={styles.modalInput}
               placeholder="Reminder text..."
+              placeholderTextColor="#999"
               value={editingReminder?.text}
               onChangeText={(txt) =>
                 setEditingReminder((prev) => (prev ? { ...prev, text: txt } : prev))
@@ -483,22 +471,14 @@ export default function Reminder() {
             <Text style={styles.modalLabel}>Select date/time</Text>
 
             {Platform.OS !== "web" ? (
-              <DateTimePicker
-                value={tempDate}
-                mode="datetime"
-                onChange={(e, d) => d && setTempDate(d)}
-              />
+              <DateTimePicker value={tempDate} mode="datetime" onChange={(e, d) => d && setTempDate(d)} />
             ) : (
               <Text style={{ marginBottom: 10, color: "#888" }}>
                 Date/time picker not supported on Web
               </Text>
             )}
 
-            <AnimatedButton
-              style={styles.modalBtn}
-              textStyle={styles.modalBtnText}
-              onPress={saveReminderFromModal}
-            >
+            <AnimatedButton style={styles.modalBtn} textStyle={styles.modalBtnText} onPress={saveReminderFromModal}>
               {editingReminder?.id ? "Save Changes" : "Save Reminder"}
             </AnimatedButton>
 
@@ -521,113 +501,115 @@ export default function Reminder() {
   );
 }
 
-/* ----------------------- Styles (same as yours) ----------------------- */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F6FF" },
-  content: { flex: 1, paddingHorizontal: 22, paddingTop: 20 },
+  container: { flex: 1, backgroundColor: "#fff" },
+  content: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
 
-  title: {
-    fontSize: 30,
-    fontWeight: "800",
-    textAlign: "center",
-    marginBottom: 25,
-    color: "#2C2C2E",
-    letterSpacing: 0.5,
-  },
+  // Like Search
+  topBar: { flexDirection: "row", alignItems: "center", marginBottom: 16, gap: 10 },
+  screenTitle: {
+  fontSize: 24,
+  fontWeight: "700",
+  color: "#000",
+  textAlign: "center",
+  flex: 1,
+},
 
-  inputRow: { flexDirection: "row", marginBottom: 18 },
+  inputRow: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
 
-  input: {
+  inputWrap: {
     flex: 1,
-    backgroundColor: "#ffffff",
-    padding: 14,
-    fontSize: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E2D5F7",
-    color: "#000",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f3e6f9",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
   },
 
-  button: {
+  input: { flex: 1, fontSize: 16, color: "#000" },
+
+  primaryBtn: {
     marginLeft: 10,
-    backgroundColor: "#A66CFF",
-    paddingHorizontal: 22,
-    paddingVertical: 14,
-    borderRadius: 14,
+    backgroundColor: "#eab8dcff",
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#A66CFF",
-    shadowOpacity: 0.4,
-    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  buttonText: { fontWeight: "700", color: "white", fontSize: 15 },
+  primaryBtnText: { fontSize: 16, fontWeight: "600", color: "#000" },
 
-  scanButton: {
-    backgroundColor: "#C39BFF",
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 20,
-    alignItems: "center",
-    shadowColor: "#C39BFF",
-    shadowOpacity: 0.35,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  scanText: { fontWeight: "700", color: "#fff", fontSize: 16 },
-
-  emptyBox: {
-    marginTop: 50,
-    backgroundColor: "#ffffff",
-    padding: 35,
-    borderRadius: 22,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  emptyTitle: { fontSize: 22, fontWeight: "700", color: "#2C2C2E" },
-  emptySubtitle: {
-    marginTop: 10,
-    color: "#6E6E73",
-    textAlign: "center",
-    fontSize: 15,
-    lineHeight: 20,
-  },
-
-  reminderRow: {
-    backgroundColor: "#ffffff",
-    padding: 18,
-    borderRadius: 18,
-    marginBottom: 14,
+  secondaryBtn: {
     flexDirection: "row",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 3 },
+    gap: 8,
+    alignItems: "center",
+    backgroundColor: "#eab8dcff",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    justifyContent: "center",
+    elevation: 2,
+    marginBottom: 12,
   },
+  secondaryBtnText: { fontSize: 16, fontWeight: "600", color: "#000" },
 
-  reminderText: { fontSize: 17, fontWeight: "600", color: "#1C1C1E" },
-  dateText: { fontSize: 12, marginTop: 6, color: "#6E6E73" },
+  noResults: { textAlign: "center", marginTop: 30, fontSize: 16, color: "#999" },
 
-  rowActions: {
-    marginLeft: 15,
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-  },
-
-  editText: { color: "#007AFF", fontWeight: "600", marginBottom: 10, fontSize: 14 },
-  deleteText: { color: "#FF453A", fontSize: 22, fontWeight: "700" },
-
-  photo: {
-    width: 85,
-    height: 85,
+  // Card like Search result item
+  card: {
+    backgroundColor: "#eab8dcff",
+    padding: 16,
     borderRadius: 14,
-    marginBottom: 5,
-    borderWidth: 1,
-    borderColor: "#eee",
+    marginBottom: 12,
+    elevation: 2,
   },
+  cardRow: { flexDirection: "row", alignItems: "stretch", gap: 12 },
 
+  cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
+
+  typePill: {
+    backgroundColor: "rgba(255,255,255,0.55)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  typePillText: { fontSize: 12, fontWeight: "700", color: "#000" },
+
+  timePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(255,255,255,0.55)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  timePillText: { fontSize: 12, fontWeight: "600", color: "#000" },
+
+  cardTitle: { fontSize: 16, fontWeight: "600", color: "#1C1C1E" },
+  cardMeta: { marginTop: 10, fontSize: 12, color: "#333" },
+
+  cardPhoto: { width: "100%", height: 170, borderRadius: 12, marginBottom: 10 },
+
+  cardActions: { justifyContent: "space-between" },
+  actionBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.55)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteBtn: { marginTop: 10 },
+
+  // Photo modal
   photoModalBg: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.90)",
@@ -640,9 +622,16 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     resizeMode: "contain",
   },
-  closePhotoBtn: { marginTop: 20, padding: 12, backgroundColor: "#333", borderRadius: 10 },
-  closePhotoText: { color: "#fff", fontSize: 18, fontWeight: "700" },
+  closePhotoBtn: {
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: "#eab8dcff",
+    borderRadius: 16,
+  },
+  closePhotoText: { color: "#000", fontSize: 16, fontWeight: "700" },
 
+  // Modal
   modalBg: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
@@ -663,30 +652,27 @@ const styles = StyleSheet.create({
 
   modalInput: {
     width: "100%",
-    backgroundColor: "#F4F2FA",
+    backgroundColor: "#f3e6f9",
     padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E3DDF7",
-    marginBottom: 16,
+    borderRadius: 16,
+    marginBottom: 14,
     color: "#000",
   },
+
+  linkText: { textAlign: "center", fontWeight: "600", color: "#007AFF", marginBottom: 12, fontSize: 14 },
 
   modalLabel: { fontWeight: "600", fontSize: 14, marginBottom: 8, color: "#444" },
 
   modalBtn: {
-    backgroundColor: "#8A4AF3",
+    backgroundColor: "#eab8dcff",
     width: "100%",
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: "center",
-    marginTop: 14,
-    shadowColor: "#8A4AF3",
-    shadowOpacity: 0.4,
-    shadowOffset: { width: 0, height: 4 },
+    marginTop: 12,
+    elevation: 2,
   },
-  modalBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  modalBtnText: { color: "#000", fontSize: 16, fontWeight: "700" },
 
-  modalImage: { width: 140, height: 140, borderRadius: 16, marginBottom: 12, alignSelf: "center" },
-  changePhotoText: { textAlign: "center", fontWeight: "600", color: "#007AFF", marginBottom: 12, fontSize: 14 },
+  modalImage: { width: 160, height: 160, borderRadius: 16, marginBottom: 12, alignSelf: "center" },
 });

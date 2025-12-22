@@ -94,7 +94,10 @@ exports[`Index Component renders without crashing 1`] = `
                 }
               }
             >
-              <Text />
+              <MaterialCommunityIcons
+                name="presentation-play"
+                size={32}
+              />
               <Text
                 style={
                   {
@@ -160,7 +163,10 @@ exports[`Index Component renders without crashing 1`] = `
                 }
               }
             >
-              <Text />
+              <Ionicons
+                name="camera-outline"
+                size={32}
+              />
               <Text
                 style={
                   {
@@ -226,7 +232,10 @@ exports[`Index Component renders without crashing 1`] = `
               }
             }
           >
-            <Text />
+            <Ionicons
+              name="location-outline"
+              size={32}
+            />
             <Text
               style={
                 {
@@ -334,7 +343,11 @@ exports[`Index Component renders without crashing 1`] = `
                   }
                 }
               >
-                <Text />
+                <MaterialCommunityIcons
+                  color="#fff"
+                  name="bookmark-outline"
+                  size={22}
+                />
               </View>
               <View>
                 <Text
@@ -450,7 +463,11 @@ exports[`Index Component renders without crashing 1`] = `
                   }
                   testID="favorite-heart"
                 >
-                  <Text />
+                  <Ionicons
+                    color="black"
+                    name="heart-outline"
+                    size={20}
+                  />
                 </View>
                 <View
                   accessibilityState={
@@ -575,7 +592,11 @@ exports[`Index Component renders without crashing 1`] = `
                   }
                   testID="favorite-heart"
                 >
-                  <Text />
+                  <Ionicons
+                    color="black"
+                    name="heart-outline"
+                    size={20}
+                  />
                 </View>
                 <View
                   accessibilityState={
@@ -700,7 +721,11 @@ exports[`Index Component renders without crashing 1`] = `
                   }
                   testID="favorite-heart"
                 >
-                  <Text />
+                  <Ionicons
+                    color="black"
+                    name="heart-outline"
+                    size={20}
+                  />
                 </View>
                 <View
                   accessibilityState={

@@ -7,6 +7,11 @@ export default function AnimatedButton({
   style,
   disabled = false,
   textStyle,
+
+  // ✅ SHTO KETO:
+  testID,
+  accessibilityLabel,
+  ...rest
 }) {
   const opacity = useRef(new Animated.Value(1)).current;
 
@@ -29,7 +34,6 @@ export default function AnimatedButton({
   };
 
   const renderChildren = () => {
-    // ✅ nëse children është tekst i thjeshtë, mbështille me <Text>
     if (typeof children === "string" || typeof children === "number") {
       return <Text style={textStyle}>{children}</Text>;
     }
@@ -37,7 +41,16 @@ export default function AnimatedButton({
   };
 
   return (
-    <Pressable onPress={onPress} onPressIn={fadeOut} onPressOut={fadeIn} disabled={disabled}>
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      onPressIn={fadeOut}
+      onPressOut={fadeIn}
+      disabled={disabled}
+      {...rest}
+    >
       <Animated.View style={[style, { opacity: disabled ? 0.5 : opacity }]}>
         {renderChildren()}
       </Animated.View>

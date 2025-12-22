@@ -41,19 +41,19 @@ function Footer({ onHomePress, onBookPress, onReminderPress, onSearchPress }) {
 
   return (
     <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
-      <AnimatedButton onPress={handleHomePress} style={styles.iconBtn}>
+      <AnimatedButton onPress={handleHomePress} style={styles.iconBtn} testID="home-icon">
         <Ionicons name="home-outline" size={28} color="#000" />
       </AnimatedButton>
 
-      <AnimatedButton onPress={handleLibraryPress} style={styles.iconBtn}>
+      <AnimatedButton onPress={handleLibraryPress} style={styles.iconBtn} testID="library-icon">
         <MaterialCommunityIcons name="book-open-outline" size={28} color="#000" />
       </AnimatedButton>
 
-      <AnimatedButton onPress={handleReminderPress} style={styles.iconBtn}>
+      <AnimatedButton onPress={handleReminderPress} style={styles.iconBtn} testID="reminder-icon">
         <Ionicons name="notifications-outline" size={28} color="#000" />
       </AnimatedButton>
 
-      <AnimatedButton onPress={handleSearchPress} style={styles.iconBtn}>
+      <AnimatedButton onPress={handleSearchPress} style={styles.iconBtn} testID="search-icon">
         <Ionicons name="search-outline" size={28} color="#000" />
       </AnimatedButton>
     </View>

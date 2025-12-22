@@ -1,5 +1,14 @@
 import { render } from "@testing-library/react-native";
-import FavoriteModal from "../app/components/FavoriteModal";
+import FavoriteModal from "../components/FavoriteModal";
+
+jest.mock("expo-asset", () => ({
+  Asset: { loadAsync: jest.fn() },
+}));
+
+jest.mock("expo-image-picker", () => ({
+  launchImageLibraryAsync: jest.fn(),
+  launchCameraAsync: jest.fn(),
+}));
 
 // 🔴 MOCK FIRESTORE (KY ËSHTË ÇELËSI)
 jest.mock("firebase/firestore", () => ({

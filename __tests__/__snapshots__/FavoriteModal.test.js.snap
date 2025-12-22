@@ -27,7 +27,7 @@ exports[`FavoriteModal Snapshot renders correctly when visible 1`] = `
           "padding": 20,
           "transform": [
             {
-              "scale": 0,
+              "scale": 0.9,
             },
           ],
           "width": "85%",
@@ -69,7 +69,11 @@ exports[`FavoriteModal Snapshot renders correctly when visible 1`] = `
           }
         }
       >
-        <Text />
+        <Ionicons
+          color="#000"
+          name="close"
+          size={24}
+        />
       </View>
       <Text
         style={
