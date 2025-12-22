@@ -4,12 +4,20 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+
+// ✅ Native-only import
+let MapView, Marker;
+if (Platform.OS !== "web") {
+  const Maps = require("react-native-maps");
+  MapView = Maps.default;
+  Marker = Maps.Marker;
+}
 
 export default function MapScreen() {
   const router = useRouter();
@@ -29,19 +37,16 @@ export default function MapScreen() {
           distanceInterval: 10,
         },
         (loc) => {
-          const coords = {
+          setLocation({
             latitude: loc.coords.latitude,
             longitude: loc.coords.longitude,
-          };
-
-          setLocation(coords);
+          });
         }
       );
     };
 
     startTracking();
 
-    // 🧹 Stop GPS when leaving screen
     return () => {
       subscription?.remove();
     };
@@ -55,9 +60,29 @@ export default function MapScreen() {
     );
   }
 
+  // 🌐 Web fallback (no native maps)
+  if (Platform.OS === "web") {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>My Location</Text>
+        </View>
+
+        <iframe
+          title="map"
+          style={{ flex: 1, border: 0 }}
+          src={`https://www.google.com/maps?q=${location.latitude},${location.longitude}&z=15&output=embed`}
+        />
+      </View>
+    );
+  }
+
+  // 📱 Native map (iOS / Android)
   return (
     <View style={styles.container}>
-      {/* 🔙 Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#000" />
@@ -65,9 +90,7 @@ export default function MapScreen() {
         <Text style={styles.headerTitle}>My Location</Text>
       </View>
 
-      {/* 🗺️ Map */}
       <MapView
-        testID="map"
         style={styles.map}
         region={{
           latitude: location.latitude,
